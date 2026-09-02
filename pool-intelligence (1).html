@@ -1,0 +1,1287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pool Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --navy:#16233d;
+  --navy-deep:#0b1220;
+  --navy-mid:#1f3155;
+  --paper:#f7f7f4;
+  --card:#ffffff;
+  --gold:#a9812e;
+  --gold-deep:#8a6a24;
+  --gold-tint:#f4ecd8;
+  --ink:#151a24;
+  --ink-soft:#5b6472;
+  --ink-faint:#8993a1;
+  --line:#e2e3df;
+  --line-soft:#edeeea;
+  --rose:#a23b34;
+  --rose-tint:#f7e9e6;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.serif{font-family:'Newsreader',serif;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+
+/* ---------- topbar ---------- */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 36px;border-bottom:1px solid var(--line);
+  background:var(--card);
+  position:sticky;top:0;z-index:40;
+}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand .mark{
+  width:34px;height:34px;border-radius:5px;background:var(--navy);
+  display:inline-flex;align-items:center;justify-content:center;
+  color:var(--gold);font-family:'Newsreader',serif;font-weight:600;font-size:16px;
+  flex:none;border:1px solid var(--navy-deep);
+}
+.brand h1{font-size:18.5px;font-weight:600;margin:0;letter-spacing:-0.01em;color:var(--navy);}
+.brand span.sub{color:var(--ink-faint);font-size:12px;font-weight:500;display:block;margin-top:1px;}
+.tabs{display:flex;gap:26px;border-bottom:none;}
+.tabs button{
+  border:none;background:transparent;padding:8px 2px;border-bottom:2px solid transparent;
+  font-family:'Inter';font-size:13.5px;font-weight:600;color:var(--ink-faint);cursor:pointer;
+  transition:color .15s, border-color .15s;
+}
+.tabs button.active{color:var(--navy);border-bottom-color:var(--gold);}
+.tabs button:hover:not(:disabled):not(.active){color:var(--ink);}
+.tabs button:disabled{opacity:.35;cursor:not-allowed;}
+.topbar-actions{display:flex;gap:10px;align-items:center;}
+.btn{
+  font-family:'Inter';font-weight:600;font-size:13px;border-radius:6px;padding:9px 16px;
+  border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;transition:border-color .15s,background .15s;
+}
+.btn:hover{border-color:var(--navy);}
+.btn.primary{background:var(--navy);border-color:var(--navy);color:#fff;}
+.btn.primary:hover{background:var(--navy-deep);}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#fff;}
+.btn.gold:hover{background:var(--gold-deep);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn.small{padding:6px 12px;font-size:12px;}
+
+/* ---------- hero / upload ---------- */
+.hero-wrap{max-width:880px;margin:0 auto;padding:88px 24px 40px;}
+.hero-eyebrow{color:var(--gold-deep);font-weight:600;font-size:13px;margin-bottom:16px;letter-spacing:.02em;}
+.hero-wrap h2{font-size:46px;line-height:1.1;margin:0 0 18px;font-weight:500;letter-spacing:-0.015em;max-width:13ch;color:var(--navy);}
+.hero-wrap p.lead{font-size:16.5px;color:var(--ink-soft);max-width:58ch;line-height:1.65;margin:0 0 40px;}
+
+.dropzone{
+  border:1.5px dashed var(--line);
+  border-radius:8px;
+  padding:48px 30px;
+  text-align:center;
+  background:var(--card);
+  cursor:pointer;
+  transition:border-color .15s, background .15s;
+}
+.dropzone.drag{border-color:var(--gold);background:var(--gold-tint);}
+.dropzone .icon{
+  width:44px;height:44px;border-radius:50%;background:var(--navy);color:var(--gold);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:18px;
+}
+.dropzone h3{margin:0 0 6px;font-size:17px;font-weight:600;color:var(--navy);}
+.dropzone p{margin:0;color:var(--ink-soft);font-size:13.5px;}
+.dropzone input{display:none;}
+.hero-foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;flex-wrap:wrap;gap:10px;}
+.hero-foot .cols-note{font-size:12.5px;color:var(--ink-soft);}
+.hero-foot .cols-note a{color:var(--navy);font-weight:600;text-decoration:none;border-bottom:1px solid var(--gold);}
+
+.expected-cols{
+  margin-top:38px;border-top:1px solid var(--line);padding-top:26px;
+}
+.expected-cols summary{cursor:pointer;font-weight:600;font-size:13.5px;color:var(--navy);}
+.expected-cols .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;}
+.expected-cols .chip{
+  background:var(--line-soft);border:1px solid var(--line);border-radius:4px;
+  padding:4px 9px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);
+}
+
+/* ---------- error / status ---------- */
+.status-bar{
+  max-width:880px;margin:14px auto 0;padding:12px 16px;border-radius:7px;font-size:13.5px;
+  display:flex;gap:9px;align-items:flex-start;
+}
+.status-bar.err{background:var(--rose-tint);color:var(--rose);border:1px solid #ecccc6;}
+.status-bar.warn{background:var(--gold-tint);color:var(--gold-deep);border:1px solid #e7d6ac;}
+
+/* ---------- dashboard shell ---------- */
+.shell{display:none;max-width:1320px;margin:0 auto;padding:32px 36px 90px;}
+.shell.show{display:block;}
+.hero-wrap.hide, .status-standalone.hide{display:none;}
+
+.stat-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:36px;}
+.stat{background:var(--card);border:1px solid var(--line);border-top:2.5px solid var(--navy);padding:18px 20px;border-radius:6px;}
+.stat .num{font-family:'Newsreader',serif;font-size:29px;font-weight:600;color:var(--navy);}
+.stat .lbl{font-size:11.5px;color:var(--ink-soft);margin-top:4px;font-weight:500;}
+@media(max-width:1100px){.stat-strip{grid-template-columns:repeat(2,1fr);}}
+
+.section-title{display:flex;align-items:baseline;justify-content:space-between;margin:44px 0 16px;}
+.section-title h2{font-size:21px;margin:0;font-weight:600;color:var(--navy);letter-spacing:-0.005em;}
+.section-title p{margin:3px 0 0;font-size:13px;color:var(--ink-soft);}
+
+.grid3{display:grid;grid-template-columns:1.05fr 1.35fr 0.9fr;gap:20px;align-items:start;}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;align-items:start;}
+@media(max-width:1100px){.grid3{grid-template-columns:1fr;}.grid2{grid-template-columns:1fr;}}
+
+.pivot-card{border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--card);}
+.pivot-card table{width:100%;border-collapse:collapse;font-size:13.5px;}
+.pivot-card thead th{
+  background:var(--navy);color:#fff;text-align:left;padding:11px 14px;font-weight:600;
+  font-size:12px;letter-spacing:.01em;
+}
+.pivot-card thead th.num{text-align:right;}
+.pivot-card tbody td{padding:9px 14px;border-top:1px solid var(--line-soft);color:var(--ink);}
+.pivot-card tbody td.num{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-soft);}
+.pivot-card tbody tr{cursor:pointer;transition:background .1s;}
+.pivot-card tbody tr:hover{background:var(--gold-tint);}
+.pivot-card tbody tr.total{background:var(--line-soft);font-weight:700;cursor:default;}
+.pivot-card tbody tr.total td.num{color:var(--navy);font-weight:700;}
+.pivot-card tbody tr.total:hover{background:var(--line-soft);}
+.pivot-card .card-head{padding:14px 14px;border-bottom:1px solid var(--line);}
+.pivot-card .card-head h3{margin:0;font-size:14.5px;font-weight:600;color:var(--navy);font-family:'Inter';}
+.pivot-card .card-head p{margin:2px 0 0;font-size:11.5px;color:var(--ink-soft);}
+
+/* ---------- student directory ---------- */
+.filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+.filter-bar input[type=text]{
+  flex:1;min-width:220px;padding:10px 13px;border:1px solid var(--line);border-radius:6px;font-size:13.5px;font-family:'Inter';
+}
+.filter-bar select{padding:9px 11px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:'Inter';background:var(--card);color:var(--ink);}
+.active-filter{
+  display:inline-flex;align-items:center;gap:7px;background:var(--navy);color:#fff;
+  padding:6px 8px 6px 12px;border-radius:20px;font-size:12.5px;font-weight:600;
+}
+.active-filter button{background:rgba(255,255,255,.18);border:none;color:#fff;width:18px;height:18px;border-radius:50%;cursor:pointer;font-size:11px;line-height:1;}
+
+.table-wrap{border:1px solid var(--line);border-radius:7px;overflow:auto;max-height:600px;}
+table.students{width:100%;border-collapse:collapse;font-size:12.8px;min-width:1400px;}
+table.students thead th{
+  position:sticky;top:0;background:var(--navy-deep);color:#fff;text-align:left;
+  padding:10px 12px;font-weight:600;font-size:11.5px;white-space:nowrap;z-index:2;
+}
+table.students tbody td{padding:9px 12px;border-top:1px solid var(--line-soft);white-space:nowrap;}
+table.students tbody tr:nth-child(even){background:#fafaf8;}
+table.students tbody tr:hover{background:var(--gold-tint);}
+.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:var(--line-soft);color:var(--ink-soft);}
+.tag.fresher{background:var(--gold-tint);color:var(--gold-deep);}
+
+.pager{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:12.5px;color:var(--ink-soft);}
+.pager .btns{display:flex;gap:6px;}
+.pager button{border:1px solid var(--line);background:var(--card);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12.5px;}
+.pager button:disabled{opacity:.35;cursor:not-allowed;}
+
+/* export tab */
+.export-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;max-width:1080px;}
+.export-card{border:1px solid var(--line);border-radius:8px;padding:24px;background:var(--card);}
+.export-card h3{margin:0 0 6px;font-size:16px;color:var(--navy);}
+.export-card p{margin:0 0 18px;font-size:13px;color:var(--ink-soft);line-height:1.55;}
+@media(max-width:700px){.export-grid{grid-template-columns:1fr;}}
+
+.rules-note{margin-top:12px;font-size:12px;color:var(--ink-soft);line-height:1.65;background:var(--line-soft);border:1px solid var(--line);border-radius:7px;padding:13px 16px;}
+
+/* ---------- executive summary (insights) ---------- */
+.insights-box{
+  border-radius:9px;background:var(--navy);color:#eef1f6;
+  padding:26px 28px;margin-bottom:8px;
+  background-image:linear-gradient(155deg, var(--navy) 0%, var(--navy-mid) 100%);
+}
+.insights-box .es-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:6px;}
+.insights-box h3{margin:0;font-size:13px;font-weight:600;color:var(--gold);letter-spacing:.03em;font-family:'Inter';}
+.insights-box .es-date{font-size:11.5px;color:#aab4c6;font-family:'IBM Plex Mono',monospace;}
+.insights-box ul{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(2,1fr);gap:11px 30px;}
+.insights-box li{font-size:13.5px;line-height:1.55;padding-left:17px;position:relative;color:#eef1f6;}
+.insights-box li::before{content:'';position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:50%;background:var(--gold);}
+.insights-box li strong{color:#fff;font-weight:600;}
+.insights-box li em{color:#cdd6e4;font-style:normal;}
+@media(max-width:900px){.insights-box ul{grid-template-columns:1fr;}}
+
+/* ---------- cross-tab matrix ---------- */
+.crosstab-wrap{border:1px solid var(--line);border-radius:7px;overflow:auto;background:var(--card);}
+table.crosstab{width:100%;border-collapse:collapse;font-size:12.8px;min-width:640px;}
+table.crosstab th, table.crosstab td{padding:9px 12px;text-align:right;border-top:1px solid var(--line-soft);white-space:nowrap;}
+table.crosstab thead th{background:var(--navy);color:#fff;text-align:right;font-weight:600;font-size:11.5px;}
+table.crosstab thead th:first-child, table.crosstab td:first-child{text-align:left;}
+table.crosstab tbody th{text-align:left;background:var(--line-soft);font-weight:600;color:var(--ink);}
+table.crosstab tfoot td, table.crosstab tfoot th{background:var(--gold-tint);font-weight:700;color:var(--gold-deep);border-top:1px solid var(--line);}
+table.crosstab td.zero{color:#c7c9c3;}
+table.crosstab td.heat{color:var(--navy);font-weight:700;}
+
+/* ---------- stat card variant for compensation ---------- */
+.stat-card{border:1px solid var(--line);border-radius:7px;background:var(--card);overflow:hidden;}
+.stat-card .card-head{padding:14px 14px;border-bottom:1px solid var(--line);}
+.stat-card .card-head h3{margin:0;font-size:14.5px;font-weight:600;color:var(--navy);font-family:'Inter';}
+.stat-card .card-head p{margin:2px 0 0;font-size:11.5px;color:var(--ink-soft);}
+.stat-card .mini-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line-soft);}
+.stat-card .mini-stats div{background:var(--card);padding:15px;}
+.stat-card .mini-stats .num{font-family:'Newsreader',serif;font-size:21px;font-weight:600;color:var(--navy);}
+.stat-card .mini-stats .lbl{font-size:11px;color:var(--ink-soft);margin-top:2px;}
+
+/* ---------- planner ---------- */
+.planner-controls{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px;
+  background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:7px;padding:15px 20px;
+}
+.planner-controls label{font-size:13.5px;font-weight:600;color:var(--navy);}
+.planner-controls input[type=number]{
+  width:70px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:14px;font-family:'IBM Plex Mono',monospace;
+  text-align:center;
+}
+.planner-controls-note{font-size:12px;color:var(--ink-soft);}
+.pivot-card tbody td.highlight{color:var(--gold-deep);font-weight:700;}
+
+::-webkit-scrollbar{height:10px;width:10px;}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px;}
+
+/* ---------- print / presentation view ---------- */
+.print-header{display:none;}
+@media print{
+  .topbar, .hero-wrap, #statusStandalone, #statusInline, .planner-controls-note,
+  .filter-bar, .pager, #tab-students, #tab-export, .btn { display:none !important; }
+  body{background:#fff;}
+  .shell{max-width:100%;padding:0 18px;}
+  .print-header{
+    display:block;padding:26px 0 18px;border-bottom:2px solid var(--navy);margin-bottom:18px;
+  }
+  .print-header h1{margin:0;font-size:24px;color:var(--navy);}
+  .print-header p{margin:4px 0 0;font-size:12px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+  #tab-summary, #tab-planner{display:block !important;}
+  .pivot-card, .stat-card, .insights-box, .crosstab-wrap{break-inside:avoid;}
+  .section-title{break-after:avoid;}
+  .insights-box{background:var(--navy) !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .pivot-card thead th, table.crosstab thead th{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="mark">PI</span>
+    <div>
+      <h1>Pool Intelligence</h1>
+      <span class="sub">Workforce placement analytics</span>
+    </div>
+  </div>
+  <div class="tabs" id="tabs">
+    <button data-tab="summary" class="active" disabled>Pool Summary</button>
+    <button data-tab="planner" disabled>Placement Planner</button>
+    <button data-tab="students" disabled>Student Directory</button>
+    <button data-tab="export" disabled>Export</button>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn small" id="newUploadBtn" style="display:none;">Load another file</button>
+  </div>
+</div>
+
+<!-- ============ UPLOAD / HERO ============ -->
+<div class="hero-wrap" id="heroWrap">
+  <div class="hero-eyebrow">Placement pool analytics</div>
+  <h2>Board-ready pool intelligence.</h2>
+  <p class="lead">Upload your candidate sheet and get an executive-grade breakdown by industry background, experience band, compensation and placement load — ready to present, and ready to export.</p>
+
+  <div class="dropzone" id="dropzone">
+    <div class="icon">↑</div>
+    <h3>Drop your CSV or XLSX here</h3>
+    <p>or click to browse — headers are matched automatically</p>
+    <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
+  </div>
+
+  <div class="hero-foot">
+    <span class="cols-note">Not sure your columns line up? <a id="downloadTemplate" href="#">Download a starter template</a></span>
+    <span class="cols-note" id="fileNameNote"></span>
+  </div>
+
+  <details class="expected-cols">
+    <summary>Columns this reads</summary>
+    <div class="chips" id="expectedChips"></div>
+  </details>
+</div>
+
+<div id="statusStandalone"></div>
+
+<!-- ============ DASHBOARD ============ -->
+<div class="shell" id="shell">
+
+  <div class="print-header" id="printHeader">
+    <h1>Pool Intelligence — Board Summary</h1>
+    <p id="printMeta"></p>
+  </div>
+
+  <div id="statusInline"></div>
+
+  <div class="stat-strip" id="statStrip"></div>
+
+  <!-- SUMMARY TAB -->
+  <div id="tab-summary">
+
+    <div class="insights-box" id="insightsBox"></div>
+
+    <div class="section-title">
+      <div>
+        <h2>Background &amp; experience</h2>
+        <p>Auto-classified from Current Role, Current Company and Key Skills</p>
+      </div>
+    </div>
+    <div class="grid3" id="coreGrid"></div>
+
+    <div class="section-title">
+      <div>
+        <h2>Experience by background</h2>
+        <p>Where each industry pool sits on the experience curve</p>
+      </div>
+    </div>
+    <div id="crossTabWrap"></div>
+
+    <div class="section-title">
+      <div>
+        <h2>Compensation &amp; readiness</h2>
+        <p>CTC movement and how soon the pool can join</p>
+      </div>
+    </div>
+    <div class="grid2" id="compGrid"></div>
+
+    <div class="section-title">
+      <div>
+        <h2>Skills &amp; preferences</h2>
+        <p>What the pool brings, and where it wants to go</p>
+      </div>
+    </div>
+    <div class="grid2" id="skillsGrid"></div>
+
+    <div class="section-title">
+      <div>
+        <h2>Pipeline &amp; profile</h2>
+        <p>Bifurcation across the rest of the sheet — click any row to filter the directory</p>
+      </div>
+    </div>
+    <div class="grid2" id="extraGrid"></div>
+    <div class="rules-note" id="rulesNote"></div>
+  </div>
+
+  <!-- PLANNER TAB -->
+  <div id="tab-planner" style="display:none;">
+    <div class="section-title">
+      <div>
+        <h2>Placement planner</h2>
+        <p>How many active company rounds it takes to place each pool</p>
+      </div>
+    </div>
+
+    <div class="planner-controls">
+      <label for="roundsInput">Active rounds needed per student</label>
+      <input type="number" id="roundsInput" min="1" max="10" value="3">
+      <span class="planner-controls-note" id="plannerFormulaNote"></span>
+    </div>
+
+    <div class="stat-strip" id="plannerStatStrip"></div>
+
+    <div class="grid2" id="plannerGrid"></div>
+
+    <div class="rules-note">
+      <strong>How this is calculated:</strong> each student needs at least <span id="roundsEcho">3</span> active company rounds to land a placement.
+      To clear an entire pool bucket, the number of company engagements required is <em>students in the bucket × rounds per student</em> —
+      so 3 students in the AI/ML pool need 9 company rounds sourced across the pipeline. Adjust the rounds input above to model a different pass rate.
+    </div>
+  </div>
+
+  <!-- STUDENTS TAB -->
+  <div id="tab-students" style="display:none;">
+    <div class="section-title">
+      <div>
+        <h2>Student directory</h2>
+        <p id="studentCountNote"></p>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <input type="text" id="searchBox" placeholder="Search name, company, role, skills, email…">
+      <div id="activeFilters" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+    </div>
+    <div class="table-wrap">
+      <table class="students" id="studentsTable">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <span id="pagerInfo"></span>
+      <div class="btns">
+        <button id="prevPage">← Prev</button>
+        <button id="nextPage">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORT TAB -->
+  <div id="tab-export" style="display:none;">
+    <div class="section-title">
+      <div>
+        <h2>Export</h2>
+        <p>Board-ready formats for stakeholders, or raw workbooks for your own analysis</p>
+      </div>
+    </div>
+    <div class="export-grid">
+      <div class="export-card">
+        <h3>Presentation view</h3>
+        <p>Opens your browser's print dialog with a clean, board-ready summary — Executive Summary, Industry &amp; Experience breakdown and the Placement Planner. Save as PDF from there.</p>
+        <button class="btn gold" id="printBtn">Print / Save as PDF</button>
+      </div>
+      <div class="export-card">
+        <h3>Tagged student data</h3>
+        <p>Every uploaded column, plus the auto-assigned Industry (Role), Industry (Company) and Experience Band tags, ready to filter or share.</p>
+        <button class="btn primary" id="exportStudents">Download .xlsx</button>
+      </div>
+      <div class="export-card">
+        <h3>Pool summary</h3>
+        <p>Every pivot table on the Pool Summary tab — Industry, Experience Band, CTC &amp; hike, notice period, skills, pipeline, tier and more — as separate sheets.</p>
+        <button class="btn primary" id="exportSummary">Download .xlsx</button>
+      </div>
+      <div class="export-card">
+        <h3>Placement planner</h3>
+        <p>Company rounds required per pool at the current rounds-per-student setting, for both Industry (Role) and Industry (Company).</p>
+        <button class="btn primary" id="exportPlanner">Download .xlsx</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+
+/* ============================================================
+   1. EXPECTED COLUMNS + FUZZY HEADER MATCHING
+   ============================================================ */
+const EXPECTED = ["User ID","Full Name","Session Availability","Username","Email","Phone","POC",
+  "Pipeline Status","Resume","College","Degree","Field of Study","Tier","Passed Out","Post Grad",
+  "Current Company","Current Role","Key Skills","Exp (Months)","Notice (Days)","Current CTC (₹)",
+  "Expected CTC (₹)","Current City","Preferred Cities","Preferred Roles","CTC hike","Notice period",
+  "Location Constraints"];
+
+function norm(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+const EXPECTED_NORM = EXPECTED.map(e=>({canon:e, n:norm(e)}));
+
+function matchHeader(raw){
+  const n = norm(raw);
+  if(!n) return null;
+  let hit = EXPECTED_NORM.find(e=>e.n===n);
+  if(hit) return hit.canon;
+  hit = EXPECTED_NORM.find(e=> n.includes(e.n) || e.n.includes(n));
+  return hit ? hit.canon : null;
+}
+
+document.getElementById('expectedChips').innerHTML =
+  EXPECTED.map(c=>'<span class="chip">'+c+'</span>').join('');
+
+/* ============================================================
+   2. CLASSIFICATION RULES
+   ============================================================ */
+function hasWord(text, word){
+  if(word.indexOf(' ')>=0) return text.indexOf(word)>=0;
+  return new RegExp('\\b'+word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i').test(text);
+}
+function matchAny(text, keywords){ return keywords.some(k=>hasWord(text,k)); }
+
+const ROLE_BUCKETS = [
+  ['Analyst', ['analyst','analytics']],
+  ['AI/ML, Tech, Automation', ['ai','ml','machine learning','artificial intelligence','automation','developer','software engineer','engineer','data scientist','data science','programmer','tech lead','sde']],
+  ['MIS', ['mis']],
+  ['Operations', ['operations','ops']],
+  ['Sales, Customer Support', ['sales','customer support','customer service','business development','bdm','telecaller','support executive','account manager']],
+];
+
+const COMPANY_BUCKETS = [
+  ['Service-based (IT / Consulting / BPO)', ['tcs','infosys','wipro','accenture','cognizant','hcl','capgemini','tech mahindra','ibm','deloitte','kpmg','ey','pwc','consulting','bpo','genpact','wns','concentrix','teleperformance','mindtree','mphasis','ltimindtree','birlasoft']],
+  ['FinTech / BFSI', ['bank','finance','financial','fintech','paytm','phonepe','razorpay','policybazaar','bajaj','hdfc','icici','sbi','axis','kotak','nbfc','insurance','mutual fund','angel one','zerodha','groww','cred','navi','moneyview','lending']],
+  ['Ed-Tech, Education', ['byju','unacademy','vedantu','upgrad','edtech','university','college','school','coaching','simplilearn','whitehat','education','toppr','physicswallah']],
+  ['Media Tech', ['media','news','entertainment','ott','hotstar','spotify','gaming','games24x7','dream11']],
+  ['Retail, E-Comm', ['amazon','flipkart','myntra','retail','ecommerce','e-commerce','nykaa','ajio','meesho','snapdeal','bigbasket','blinkit','zepto','swiggy','zomato','tatacliq']],
+  ['PropTech, Construction', ['real estate','realty','proptech','nobroker','housing.com','99acres','magicbricks','square yards']],
+  ['Healthcare, HealthTech', ['hospital','health','pharma','medical','diagnostics','practo','healthtech','apollo','1mg','pharmeasy','cure.fit','cultfit']],
+  ['Electronics', ['electronics','semiconductor','hardware','samsung','intel','qualcomm']],
+  ['Manufacturing', ['manufacturing','industries','factory','steel','cement','fmcg']],
+  ['Construction', ['construction','infrastructure','infra','larsen']],
+  ['Automotive', ['motors','automobile','automotive','maruti','hyundai','tesla','hero moto']],
+  ['AI/ML, Tech, Automation', ['ai','ml','artificial intelligence','machine learning','automation','saas','software','startup','robotics','technolog']],
+];
+
+function classifyRole(row){
+  const role = String(row['Current Role']||'').toLowerCase().trim();
+  const skills = String(row['Key Skills']||'').toLowerCase();
+  const expM = row.__expMonths;
+  if(!role && (expM===null || expM===0)) return 'Fresher / No Prior Role';
+  const combined = role+' '+skills;
+  for(const [label,kw] of ROLE_BUCKETS){ if(matchAny(combined,kw)) return label; }
+  return role ? 'Other' : 'Fresher / No Prior Role';
+}
+function classifyCompany(row){
+  const company = String(row['Current Company']||'').toLowerCase().trim();
+  if(!company) return 'Fresher / No Prior Company';
+  for(const [label,kw] of COMPANY_BUCKETS){ if(matchAny(company,kw)) return label; }
+  return 'Other';
+}
+function expBand(months){
+  if(months===null || isNaN(months)) return 'Unknown';
+  const yrs = months/12;
+  if(yrs<1) return '0–1 yr';
+  if(yrs<=3) return '1–3 yr';
+  if(yrs<=5) return '3–5 yr';
+  if(yrs<=8) return '5–8 yr';
+  return '8+ yr';
+}
+
+/* ============================================================
+   3. STATE
+   ============================================================ */
+let ROWS = [];           // full tagged rows
+let FILTERED = [];       // after search + pivot-click filters
+let activeFilters = {};  // {fieldLabel: value}
+let page = 0;
+const PAGE_SIZE = 40;
+let ROUNDS_PER_STUDENT = 3;
+let sortState = {col:null, dir:1};
+
+function parseNum(v){
+  if(v===undefined||v===null||v==='') return null;
+  const n = parseFloat(String(v).replace(/[,₹%\s]/g,''));
+  return isNaN(n) ? null : n;
+}
+function noticeDaysOf(row){
+  const direct = parseNum(row['Notice (Days)']);
+  if(direct!==null) return direct;
+  const txt = String(row['Notice period']||'');
+  const m = txt.match(/(\d+)/);
+  return m ? parseFloat(m[1]) : null;
+}
+function hikePctOf(row){
+  const direct = parseNum(row['CTC hike']);
+  if(direct!==null) return direct;
+  if(row.__ctcCurrent && row.__ctcExpected && row.__ctcCurrent>0){
+    return ((row.__ctcExpected-row.__ctcCurrent)/row.__ctcCurrent)*100;
+  }
+  return null;
+}
+function noticeBand(days){
+  if(days===null) return 'Unspecified';
+  if(days<=0) return 'Immediate';
+  if(days<=15) return '1–15 days';
+  if(days<=30) return '16–30 days';
+  if(days<=60) return '31–60 days';
+  return '60+ days';
+}
+function hikeBand(pct){
+  if(pct===null) return 'Unspecified';
+  if(pct<0) return 'Negative';
+  if(pct<=25) return '0–25%';
+  if(pct<=50) return '25–50%';
+  if(pct<=75) return '50–75%';
+  if(pct<=100) return '75–100%';
+  return '100%+';
+}
+function topSkills(rows, n){
+  const map = new Map();
+  rows.forEach(r=>{
+    const s = String(r['Key Skills']||'');
+    if(!s.trim()) return;
+    s.split(/[,;/|]/).map(x=>x.trim()).filter(Boolean).forEach(skill=>{
+      const k = skill.replace(/\s+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+      map.set(k, (map.get(k)||0)+1);
+    });
+  });
+  return Array.from(map.entries()).map(([label,count])=>({label,count,avgExp:null}))
+    .sort((a,b)=>b.count-a.count).slice(0,n||12);
+}
+
+/* ============================================================
+   4. FILE HANDLING
+   ============================================================ */
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+dropzone.addEventListener('click', ()=>fileInput.click());
+dropzone.addEventListener('dragover', e=>{e.preventDefault(); dropzone.classList.add('drag');});
+dropzone.addEventListener('dragleave', ()=>dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', e=>{
+  e.preventDefault(); dropzone.classList.remove('drag');
+  if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e=>{ if(e.target.files.length) handleFile(e.target.files[0]); });
+
+document.getElementById('newUploadBtn').addEventListener('click', ()=>{
+  document.getElementById('shell').classList.remove('show');
+  document.getElementById('heroWrap').classList.remove('hide');
+  document.getElementById('newUploadBtn').style.display='none';
+  document.querySelectorAll('#tabs button').forEach(b=>b.disabled=true);
+  setStatus(null);
+  fileInput.value='';
+});
+
+function setStatus(msg, type){
+  const inline = document.getElementById('statusInline');
+  const standalone = document.getElementById('statusStandalone');
+  const html = msg ? '<div class="status-bar '+(type||'warn')+'"><span>'+(type==='err'?'⚠':'ℹ')+'</span><span>'+msg+'</span></div>' : '';
+  inline.innerHTML = html;
+  standalone.innerHTML = html;
+}
+
+function handleFile(file){
+  const name = file.name.toLowerCase();
+  if(!/\.(csv|xlsx|xls)$/.test(name)){
+    setStatus('That file type isn\'t supported. Upload a .csv or .xlsx file.', 'err');
+    return;
+  }
+  document.getElementById('fileNameNote').textContent = 'Loaded: '+file.name;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(sheet, {defval:'', raw:false});
+      if(!json.length){ setStatus('That sheet looks empty — check it has a header row and at least one candidate.', 'err'); return; }
+      ingest(json);
+    }catch(err){
+      console.error(err);
+      setStatus('Couldn\'t read that file. Make sure it\'s a valid CSV or Excel export.', 'err');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function ingest(json){
+  const rawHeaders = Object.keys(json[0]);
+  const headerMap = {};
+  const unmatched = [];
+  rawHeaders.forEach(h=>{
+    const c = matchHeader(h);
+    if(c) headerMap[h]=c; else unmatched.push(h);
+  });
+  const matchedCanon = new Set(Object.values(headerMap));
+  const missing = EXPECTED.filter(c=>!matchedCanon.has(c));
+
+  ROWS = json.map(r=>{
+    const row = {};
+    rawHeaders.forEach(h=>{ if(headerMap[h]) row[headerMap[h]] = r[h]; });
+    row.__expMonths = parseNum(row['Exp (Months)']);
+    row.__ctcCurrent = parseNum(row['Current CTC (₹)']);
+    row.__ctcExpected = parseNum(row['Expected CTC (₹)']);
+    row.__roleTag = classifyRole(row);
+    row.__companyTag = classifyCompany(row);
+    row.__expBand = expBand(row.__expMonths);
+    row.__noticeDays = noticeDaysOf(row);
+    row.__noticeBand = noticeBand(row.__noticeDays);
+    row.__hikePct = hikePctOf(row);
+    row.__hikeBand = hikeBand(row.__hikePct);
+    return row;
+  }).filter(r => Object.keys(r).length>1 && (r['Full Name']||r['Email']||r['Username']));
+
+  if(!ROWS.length){
+    setStatus('No usable rows found — check that Full Name, Email or Username is filled in.', 'err');
+    return;
+  }
+
+  let msg = '';
+  if(missing.length){
+    msg = 'Loaded '+ROWS.length+' candidates. '+missing.length+' expected column'+(missing.length>1?'s were':' was')+' not found in your sheet (Location Constraints etc. still classify fine without them): '+missing.join(', ')+'.';
+    setStatus(msg,'warn');
+  } else {
+    setStatus(null);
+  }
+
+  document.getElementById('heroWrap').classList.add('hide');
+  document.getElementById('shell').classList.add('show');
+  document.getElementById('newUploadBtn').style.display='inline-flex';
+  document.querySelectorAll('#tabs button').forEach(b=>b.disabled=false);
+
+  activeFilters = {}; page = 0;
+  renderAll();
+}
+
+/* ============================================================
+   5. PIVOT ENGINE
+   ============================================================ */
+function pivot(rows, keyFn, opts){
+  opts = opts||{};
+  const map = new Map();
+  rows.forEach(r=>{
+    const k = keyFn(r) || 'Unspecified';
+    if(!map.has(k)) map.set(k, {count:0, expSum:0, expN:0});
+    const b = map.get(k);
+    b.count++;
+    if(opts.withExp && r.__expMonths!==null){ b.expSum += r.__expMonths/12; b.expN++; }
+  });
+  let arr = Array.from(map.entries()).map(([label,b])=>({
+    label, count:b.count,
+    avgExp: b.expN ? (b.expSum/b.expN) : null
+  }));
+  arr.sort((a,b)=>b.count-a.count);
+  if(opts.topN && arr.length>opts.topN){
+    const head = arr.slice(0,opts.topN);
+    const rest = arr.slice(opts.topN);
+    const restCount = rest.reduce((s,x)=>s+x.count,0);
+    arr = head.concat([{label:'Other', count:restCount, avgExp:null}]);
+  }
+  const total = {count: rows.length, avgExp: (opts.withExp ? (function(){
+      const n = rows.filter(r=>r.__expMonths!==null).length;
+      if(!n) return null;
+      return rows.reduce((s,r)=> s + (r.__expMonths!==null? r.__expMonths/12:0),0)/n;
+    })() : null)};
+  return {rows:arr, total};
+}
+
+function pivotCard(title, subtitle, key, data, opts){
+  opts = opts||{};
+  const withExp = !!opts.withExp;
+  let html = '<div class="pivot-card">';
+  html += '<div class="card-head"><h3>'+title+'</h3><p>'+subtitle+'</p></div>';
+  const colLabel = opts.colLabel || 'Category';
+  html += '<table><thead><tr><th>'+colLabel+'</th><th class="num">Count</th>'+(withExp?'<th class="num">Avg Exp (Yrs)</th>':'')+'</tr></thead><tbody>';
+  data.rows.forEach(r=>{
+    html += '<tr data-key="'+key+'" data-val="'+escAttr(r.label)+'"><td>'+escHtml(r.label)+'</td><td class="num">'+r.count+'</td>'+(withExp?'<td class="num">'+(r.avgExp!==null? r.avgExp.toFixed(1):'—')+'</td>':'')+'</tr>';
+  });
+  html += '<tr class="total"><td>Total</td><td class="num">'+data.total.count+'</td>'+(withExp?'<td class="num">'+(data.total.avgExp!==null? data.total.avgExp.toFixed(1):'—')+'</td>':'')+'</tr>';
+  html += '</tbody></table></div>';
+  return html;
+}
+function escHtml(s){ return String(s).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function escAttr(s){ return String(s).replace(/"/g,'&quot;'); }
+
+/* ============================================================
+   6. RENDER: SUMMARY TAB
+   ============================================================ */
+function renderStats(){
+  const n = ROWS.length;
+  const withExp = ROWS.filter(r=>r.__expMonths!==null);
+  const avgExp = withExp.length ? (withExp.reduce((s,r)=>s+r.__expMonths/12,0)/withExp.length).toFixed(1) : '—';
+  const companies = new Set(ROWS.map(r=>String(r['Current Company']||'').trim()).filter(Boolean)).size;
+  const roles = new Set(ROWS.map(r=>String(r['Current Role']||'').trim()).filter(Boolean)).size;
+  const active = ROWS.filter(r=>{
+    const s = String(r['Pipeline Status']||'').toLowerCase();
+    return s && !/reject|drop|withdraw/.test(s);
+  }).length;
+  const stats = [
+    [n,'Total candidates'],
+    [avgExp,'Avg experience (yrs)'],
+    [companies,'Unique current companies'],
+    [roles,'Unique current roles'],
+    [active,'Active in pipeline'],
+  ];
+  document.getElementById('statStrip').innerHTML = stats.map(([v,l])=>
+    '<div class="stat"><div class="num">'+v+'</div><div class="lbl">'+l+'</div></div>').join('');
+}
+
+const BAND_ORDER = ['0–1 yr','1–3 yr','3–5 yr','5–8 yr','8+ yr','Unknown'];
+const HIKE_ORDER = ['Negative','0–25%','25–50%','50–75%','75–100%','100%+','Unspecified'];
+const NOTICE_ORDER = ['Immediate','1–15 days','16–30 days','31–60 days','60+ days','Unspecified'];
+
+function avgOf(rows, getter){
+  const vals = rows.map(getter).filter(v=>v!==null && v!==undefined && !isNaN(v));
+  if(!vals.length) return null;
+  return vals.reduce((a,b)=>a+b,0)/vals.length;
+}
+function medianOf(rows, getter){
+  const vals = rows.map(getter).filter(v=>v!==null && v!==undefined && !isNaN(v)).sort((a,b)=>a-b);
+  if(!vals.length) return null;
+  const mid = Math.floor(vals.length/2);
+  return vals.length%2 ? vals[mid] : (vals[mid-1]+vals[mid])/2;
+}
+function fmtMoney(n){
+  if(n===null || n===undefined) return '—';
+  if(n>=100000) return '₹'+(n/100000).toFixed(1)+'L';
+  return '₹'+Math.round(n).toLocaleString('en-IN');
+}
+
+function renderSummary(){
+  const rows = FILTERED;
+
+  const roleData = pivot(rows, r=>r.__roleTag, {withExp:true});
+  const companyData = pivot(rows, r=>r.__companyTag, {withExp:true});
+  const bandDataRaw = pivot(rows, r=>r.__expBand, {withExp:true});
+  bandDataRaw.rows.sort((a,b)=>BAND_ORDER.indexOf(a.label)-BAND_ORDER.indexOf(b.label));
+
+  let core = '';
+  core += pivotCard('Industry 1 · Previous Roles','Classified from Current Role + Key Skills','Industry (Role)',roleData,{withExp:true});
+  core += pivotCard('Industry 2 · Previous Companies','Classified from Current Company','Industry (Company)',companyData,{withExp:true});
+  core += pivotCard('Experience Band','Grouped from Exp (Months)','Experience Band',bandDataRaw,{withExp:true});
+  document.getElementById('coreGrid').innerHTML = core;
+
+  document.getElementById('crossTabWrap').innerHTML = crossTabHTML(rows);
+
+  const ctcCurrentAvg = avgOf(rows, r=>r.__ctcCurrent);
+  const ctcExpectedAvg = avgOf(rows, r=>r.__ctcExpected);
+  const hikeAvg = avgOf(rows, r=>r.__hikePct);
+  const hikeMedian = medianOf(rows, r=>r.__hikePct);
+  let comp = '';
+  comp += statCardHTML('CTC &amp; hike overview','Averages across '+rows.length+' filtered candidates', [
+    [fmtMoney(ctcCurrentAvg),'Avg current CTC'],
+    [fmtMoney(ctcExpectedAvg),'Avg expected CTC'],
+    [hikeAvg!==null? hikeAvg.toFixed(0)+'%':'—','Avg expected hike'],
+    [hikeMedian!==null? hikeMedian.toFixed(0)+'%':'—','Median expected hike'],
+  ]);
+  const hikeData = pivot(rows, r=>r.__hikeBand, {});
+  hikeData.rows.sort((a,b)=>HIKE_ORDER.indexOf(a.label)-HIKE_ORDER.indexOf(b.label));
+  comp += pivotCard('Expected Hike Band','From CTC hike, or Expected vs Current CTC','Hike Band', hikeData, {});
+  document.getElementById('compGrid').innerHTML = comp;
+
+  let skills = '';
+  skills += pivotCard('Top Skills','Parsed from Key Skills (comma-separated)','Key Skills', {rows:topSkills(rows,10), total:{count:rows.length,avgExp:null}}, {});
+  skills += pivotCard('Preferred Roles','What the pool is targeting next','Preferred Roles', pivot(rows, r=>r['Preferred Roles']||'Unspecified',{topN:9}), {});
+  document.getElementById('skillsGrid').innerHTML = skills;
+
+  let extra = '';
+  extra += pivotCard('Pipeline Status','Current stage in the process','Pipeline Status', pivot(rows,r=>r['Pipeline Status']||'Unspecified',{}), {});
+  extra += pivotCard('Tier','College tier','Tier', pivot(rows,r=>r['Tier']||'Unspecified',{}), {});
+  extra += pivotCard('POC','Point of contact','POC', pivot(rows,r=>r['POC']||'Unspecified',{}), {});
+  extra += pivotCard('Current City','Top locations','Current City', pivot(rows,r=>r['Current City']||'Unspecified',{topN:9}), {});
+  const noticeData = pivot(rows, r=>r.__noticeBand, {});
+  noticeData.rows.sort((a,b)=>NOTICE_ORDER.indexOf(a.label)-NOTICE_ORDER.indexOf(b.label));
+  extra += pivotCard('Notice Period','How soon the pool can join','Notice Band', noticeData, {});
+  document.getElementById('extraGrid').innerHTML = extra;
+
+  document.getElementById('rulesNote').innerHTML =
+    '<strong>How buckets are assigned:</strong> Industry (Role) and Industry (Company) are inferred with keyword matching against Current Role / Key Skills and Current Company. '+
+    'Rows with no current company are tagged <em>Fresher / No Prior Company</em>; rows with no current role and no experience are tagged <em>Fresher / No Prior Role</em>. '+
+    'Anything that doesn\'t match a known pattern falls into <em>Other</em> — click any table row to inspect those students in the directory.';
+
+  document.querySelectorAll('.pivot-card tbody tr:not(.total)').forEach(tr=>{
+    tr.addEventListener('click', ()=>{
+      const key = tr.getAttribute('data-key');
+      const val = tr.getAttribute('data-val');
+      setPivotFilter(key,val);
+    });
+  });
+
+  renderInsights(rows, roleData, companyData, bandDataRaw, hikeAvg, ctcCurrentAvg, ctcExpectedAvg);
+}
+
+function statCardHTML(title, subtitle, pairs){
+  let html = '<div class="stat-card"><div class="card-head"><h3>'+title+'</h3><p>'+subtitle+'</p></div>';
+  html += '<div class="mini-stats">'+pairs.map(([v,l])=>'<div><div class="num">'+v+'</div><div class="lbl">'+l+'</div></div>').join('')+'</div>';
+  html += '</div>';
+  return html;
+}
+
+function crossTabHTML(rows){
+  const roles = Array.from(new Set(rows.map(r=>r.__roleTag)));
+  const roleCounts = {};
+  roles.forEach(rl=> roleCounts[rl] = rows.filter(r=>r.__roleTag===rl).length);
+  roles.sort((a,b)=> roleCounts[b]-roleCounts[a]);
+
+  const bands = BAND_ORDER.filter(b=> rows.some(r=>r.__expBand===b));
+  const matrix = {};
+  roles.forEach(rl=>{ matrix[rl] = {}; bands.forEach(b=> matrix[rl][b] = 0); });
+  rows.forEach(r=>{ if(matrix[r.__roleTag]) matrix[r.__roleTag][r.__expBand]++; });
+
+  const colTotals = {}; bands.forEach(b=> colTotals[b] = rows.filter(r=>r.__expBand===b).length);
+  const maxCell = Math.max(1, ...roles.flatMap(rl=>bands.map(b=>matrix[rl][b])));
+
+  let html = '<div class="crosstab-wrap"><table class="crosstab"><thead><tr><th>Industry (Role)</th>'+
+    bands.map(b=>'<th>'+b+'</th>').join('')+'<th>Total</th></tr></thead><tbody>';
+  roles.forEach(rl=>{
+    html += '<tr><th>'+escHtml(rl)+'</th>';
+    bands.forEach(b=>{
+      const v = matrix[rl][b];
+      const cls = v===0 ? 'zero' : (v>=maxCell*0.6 ? 'heat':'');
+      html += '<td class="'+cls+'">'+(v||'—')+'</td>';
+    });
+    html += '<td><strong>'+roleCounts[rl]+'</strong></td></tr>';
+  });
+  html += '</tbody><tfoot><tr><td>Total</td>'+bands.map(b=>'<td>'+colTotals[b]+'</td>').join('')+'<td>'+rows.length+'</td></tr></tfoot>';
+  html += '</table></div>';
+  return html;
+}
+
+function renderInsights(rows, roleData, companyData, bandData, hikeAvg, ctcCurrentAvg, ctcExpectedAvg){
+  const n = rows.length;
+  const bullets = [];
+  const todayStr = new Date().toLocaleDateString('en-IN', {day:'numeric', month:'long', year:'numeric'});
+  if(n===0){
+    document.getElementById('insightsBox').innerHTML =
+      '<div class="es-head"><h3>Executive Summary</h3><span class="es-date">'+todayStr+'</span></div>'+
+      '<p style="font-size:13px;color:#cdd6e4;margin:0;">No candidates match the current filters.</p>';
+    return;
+  }
+  const topRole = roleData.rows[0];
+  if(topRole) bullets.push('<strong>'+escHtml(topRole.label)+'</strong> is the largest role background, at '+topRole.count+' of '+n+' candidates <em>('+Math.round(topRole.count/n*100)+'%)</em>.');
+
+  const topCompany = companyData.rows[0];
+  if(topCompany) bullets.push('<strong>'+escHtml(topCompany.label)+'</strong> leads the company backgrounds with '+topCompany.count+' candidates <em>('+Math.round(topCompany.count/n*100)+'%)</em>.');
+
+  const fresherRole = roleData.rows.find(r=>/Fresher/.test(r.label));
+  if(fresherRole && fresherRole.count>0) bullets.push(fresherRole.count+' candidate'+(fresherRole.count>1?'s have':' has')+' no prior role experience <em>('+Math.round(fresherRole.count/n*100)+'% of the pool)</em>.');
+
+  const withExp = rows.filter(r=>r.__expMonths!==null);
+  if(withExp.length){
+    const avgYrs = withExp.reduce((s,r)=>s+r.__expMonths/12,0)/withExp.length;
+    bullets.push('Average experience across the pool is <strong>'+avgYrs.toFixed(1)+' years</strong>, based on '+withExp.length+' candidates with experience data.');
+  }
+
+  const junior = bandData.rows.filter(b=>b.label==='0–1 yr'||b.label==='1–3 yr').reduce((s,b)=>s+b.count,0);
+  if(junior>0) bullets.push(Math.round(junior/n*100)+'% of the pool has 3 years of experience or less.');
+
+  if(hikeAvg!==null) bullets.push('Candidates are expecting an average hike of <strong>'+hikeAvg.toFixed(0)+'%</strong> over their current CTC.');
+
+  const quickJoiners = rows.filter(r=> r.__noticeBand==='Immediate' || r.__noticeBand==='1–15 days').length;
+  if(quickJoiners>0) bullets.push(quickJoiners+' candidate'+(quickJoiners>1?'s can':' can')+' join within 15 days.');
+
+  const totalRoundsNeeded = n*ROUNDS_PER_STUDENT;
+  bullets.push('At '+ROUNDS_PER_STUDENT+' active rounds per student, placing this full pool needs <strong>'+totalRoundsNeeded.toLocaleString('en-IN')+' company rounds</strong> — see the Placement Planner tab.');
+
+  const skills = topSkills(rows,1);
+  if(skills.length) bullets.push('<strong>'+escHtml(skills[0].label)+'</strong> is the most common skill, appearing '+skills[0].count+' times.');
+
+  document.getElementById('insightsBox').innerHTML =
+    '<div class="es-head"><h3>Executive Summary</h3><span class="es-date">'+n+' candidates · '+todayStr+'</span></div>'+
+    '<ul>'+bullets.map(b=>'<li>'+b+'</li>').join('')+'</ul>';
+
+  const printMeta = document.getElementById('printMeta');
+  if(printMeta) printMeta.textContent = n+' candidates analyzed · Generated '+todayStr;
+}
+
+/* ============================================================
+   7. FILTERING + STUDENT DIRECTORY
+   ============================================================ */
+function fieldGetter(key){
+  if(key==='Industry (Role)') return r=>r.__roleTag;
+  if(key==='Industry (Company)') return r=>r.__companyTag;
+  if(key==='Experience Band') return r=>r.__expBand;
+  if(key==='Hike Band') return r=>r.__hikeBand;
+  if(key==='Notice Band') return r=>r.__noticeBand;
+  return r=> r[key] || 'Unspecified';
+}
+
+function setPivotFilter(key,val){
+  activeFilters[key] = val;
+  page = 0;
+  const searchBox = document.getElementById('searchBox');
+  if(searchBox.value) searchBox.value = ''; // a category click starts a fresh view, not a refinement of the old search
+  applyFilters();
+  switchTab('students');
+  renderActiveFilters();
+  renderStudents();
+}
+
+function removeFilter(key){
+  delete activeFilters[key];
+  page = 0;
+  applyFilters();
+  renderActiveFilters();
+  renderStudents();
+}
+
+function renderActiveFilters(){
+  const el = document.getElementById('activeFilters');
+  const keys = Object.keys(activeFilters);
+  el.innerHTML = keys.map(k=>
+    '<span class="active-filter">'+escHtml(k)+': '+escHtml(activeFilters[k])+' <button data-k="'+escAttr(k)+'">×</button></span>'
+  ).join('');
+  el.querySelectorAll('button').forEach(b=> b.addEventListener('click', ()=>removeFilter(b.getAttribute('data-k'))));
+}
+
+function applyFilters(){
+  let rows = ROWS;
+  Object.entries(activeFilters).forEach(([k,v])=>{
+    if(k==='Key Skills'){
+      const needle = v.toLowerCase();
+      rows = rows.filter(r=> String(r['Key Skills']||'').toLowerCase().includes(needle));
+      return;
+    }
+    const g = fieldGetter(k);
+    rows = rows.filter(r=> String(g(r))===v );
+  });
+  const q = (document.getElementById('searchBox').value||'').toLowerCase().trim();
+  if(q){
+    rows = rows.filter(r=>{
+      return ['Full Name','Email','Username','Current Company','Current Role','Key Skills','Current City','Preferred Cities','Preferred Roles']
+        .some(f=> String(r[f]||'').toLowerCase().includes(q));
+    });
+  }
+  FILTERED = rows;
+}
+
+const STUDENT_COLS = [
+  'Full Name','Email','Username','Phone','POC','Pipeline Status','Tier','College',
+  'Current Company','Current Role','Industry (Role)','Industry (Company)','Exp (Months)','Experience Band',
+  'Notice period','Current CTC (₹)','Expected CTC (₹)','CTC hike','Current City','Preferred Cities'
+];
+
+const NUMERIC_COLS = new Set(['Exp (Months)','Current CTC (₹)','Expected CTC (₹)','CTC hike']);
+
+function cellValue(r,col){
+  if(col==='Industry (Role)') return r.__roleTag;
+  if(col==='Industry (Company)') return r.__companyTag;
+  if(col==='Experience Band') return r.__expBand;
+  return r[col]!==undefined && r[col]!=='' ? r[col] : '—';
+}
+function sortValue(r,col){
+  if(col==='Exp (Months)') return r.__expMonths;
+  if(col==='Current CTC (₹)') return r.__ctcCurrent;
+  if(col==='Expected CTC (₹)') return r.__ctcExpected;
+  if(col==='CTC hike') return r.__hikePct;
+  return String(cellValue(r,col)).toLowerCase();
+}
+
+function sortedRows(){
+  if(!sortState.col) return FILTERED;
+  const col = sortState.col, dir = sortState.dir;
+  const withVal = FILTERED.map((r,i)=>({r,i,v:sortValue(r,col)}));
+  withVal.sort((a,b)=>{
+    const av=a.v, bv=b.v;
+    const aNull = av===null||av===undefined||av==='—';
+    const bNull = bv===null||bv===undefined||bv==='—';
+    if(aNull && bNull) return a.i-b.i;
+    if(aNull) return 1;
+    if(bNull) return -1;
+    if(typeof av==='number' && typeof bv==='number') return dir*(av-bv);
+    return dir*String(av).localeCompare(String(bv));
+  });
+  return withVal.map(x=>x.r);
+}
+
+function renderStudents(){
+  document.getElementById('studentCountNote').textContent =
+    FILTERED.length+' of '+ROWS.length+' candidates shown — click a column header to sort';
+
+  const thead = document.querySelector('#studentsTable thead');
+  thead.innerHTML = '<tr>'+STUDENT_COLS.map(c=>{
+    const active = sortState.col===c;
+    const arrow = active ? (sortState.dir===1?' ▲':' ▼') : '';
+    return '<th data-col="'+escAttr(c)+'" style="cursor:pointer;">'+escHtml(c)+arrow+'</th>';
+  }).join('')+'</tr>';
+  thead.querySelectorAll('th').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const c = th.getAttribute('data-col');
+      if(sortState.col===c) sortState.dir *= -1; else { sortState.col=c; sortState.dir=1; }
+      page=0;
+      renderStudents();
+    });
+  });
+
+  const ordered = sortedRows();
+  const start = page*PAGE_SIZE;
+  const pageRows = ordered.slice(start, start+PAGE_SIZE);
+  const tbody = document.querySelector('#studentsTable tbody');
+  tbody.innerHTML = pageRows.map(r=>{
+    return '<tr>'+STUDENT_COLS.map(c=>{
+      let v = cellValue(r,c);
+      if(c==='Industry (Role)' || c==='Industry (Company)'){
+        const cls = /Fresher/.test(v) ? 'tag fresher':'tag';
+        return '<td><span class="'+cls+'">'+escHtml(v)+'</span></td>';
+      }
+      return '<td>'+escHtml(v)+'</td>';
+    }).join('')+'</tr>';
+  }).join('');
+
+  const totalPages = Math.max(1, Math.ceil(FILTERED.length/PAGE_SIZE));
+  document.getElementById('pagerInfo').textContent = 'Page '+(page+1)+' of '+totalPages;
+  document.getElementById('prevPage').disabled = page<=0;
+  document.getElementById('nextPage').disabled = page>=totalPages-1;
+}
+
+document.getElementById('searchBox').addEventListener('input', ()=>{ page=0; applyFilters(); renderStudents(); });
+document.getElementById('prevPage').addEventListener('click', ()=>{ if(page>0){page--; renderStudents();} });
+document.getElementById('nextPage').addEventListener('click', ()=>{
+  const totalPages = Math.max(1, Math.ceil(FILTERED.length/PAGE_SIZE));
+  if(page<totalPages-1){page++; renderStudents();}
+});
+
+/* ============================================================
+   8. TABS
+   ============================================================ */
+function switchTab(name){
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  ['summary','planner','students','export'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display = (t===name)?'block':'none';
+  });
+}
+document.querySelectorAll('#tabs button').forEach(b=>{
+  b.addEventListener('click', ()=>{ if(!b.disabled) switchTab(b.dataset.tab); });
+});
+
+/* ============================================================
+   9. EXPORT
+   ============================================================ */
+document.getElementById('exportStudents').addEventListener('click', ()=>{
+  const cols = EXPECTED.concat(['Industry (Role)','Industry (Company)','Experience Band']);
+  const data = ROWS.map(r=>{
+    const o = {};
+    EXPECTED.forEach(c=> o[c] = r[c]!==undefined ? r[c] : '');
+    o['Industry (Role)'] = r.__roleTag;
+    o['Industry (Company)'] = r.__companyTag;
+    o['Experience Band'] = r.__expBand;
+    return o;
+  });
+  const ws = XLSX.utils.json_to_sheet(data, {header:cols});
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Tagged Students');
+  XLSX.writeFile(wb, 'pool-intelligence-tagged-students.xlsx');
+});
+
+document.getElementById('exportSummary').addEventListener('click', ()=>{
+  const wb = XLSX.utils.book_new();
+  function addSheet(name, data){
+    const rows = data.rows.map(r=>({Category:r.label, Count:r.count, 'Avg Exp (Yrs)': r.avgExp!==null? +r.avgExp.toFixed(1):''}));
+    rows.push({Category:'Total', Count:data.total.count, 'Avg Exp (Yrs)': data.total.avgExp!==null? +data.total.avgExp.toFixed(1):''});
+    const ws = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, name.slice(0,31));
+  }
+  addSheet('Industry - Role', pivot(ROWS, r=>r.__roleTag, {withExp:true}));
+  addSheet('Industry - Company', pivot(ROWS, r=>r.__companyTag, {withExp:true}));
+  addSheet('Experience Band', pivot(ROWS, r=>r.__expBand, {withExp:true}));
+  addSheet('Hike Band', pivot(ROWS, r=>r.__hikeBand, {}));
+  addSheet('Notice Period', pivot(ROWS, r=>r.__noticeBand, {}));
+  addSheet('Top Skills', {rows:topSkills(ROWS,30), total:{count:ROWS.length, avgExp:null}});
+  addSheet('Preferred Roles', pivot(ROWS, r=>r['Preferred Roles']||'Unspecified', {topN:20}));
+  addSheet('Pipeline Status', pivot(ROWS, r=>r['Pipeline Status']||'Unspecified', {}));
+  addSheet('Tier', pivot(ROWS, r=>r['Tier']||'Unspecified', {}));
+  addSheet('POC', pivot(ROWS, r=>r['POC']||'Unspecified', {}));
+  addSheet('Current City', pivot(ROWS, r=>r['Current City']||'Unspecified', {topN:20}));
+
+  // Cross-tab sheet: Industry (Role) x Experience Band
+  const roles = Array.from(new Set(ROWS.map(r=>r.__roleTag)));
+  const crossRows = roles.map(rl=>{
+    const o = {'Industry (Role)': rl};
+    BAND_ORDER.forEach(b=> o[b] = ROWS.filter(r=>r.__roleTag===rl && r.__expBand===b).length);
+    o['Total'] = ROWS.filter(r=>r.__roleTag===rl).length;
+    return o;
+  });
+  const crossWs = XLSX.utils.json_to_sheet(crossRows);
+  XLSX.utils.book_append_sheet(wb, crossWs, 'Role x Experience');
+
+  XLSX.writeFile(wb, 'pool-intelligence-summary.xlsx');
+});
+
+document.getElementById('exportPlanner').addEventListener('click', ()=>{
+  const wb = XLSX.utils.book_new();
+  function addPlannerSheet(name, data){
+    const rows = data.rows.map(r=>({
+      Category:r.label, Students:r.count, 'Rounds / Student':ROUNDS_PER_STUDENT,
+      'Company Rounds Required': r.count*ROUNDS_PER_STUDENT
+    }));
+    rows.push({Category:'Total', Students:data.total.count, 'Rounds / Student':ROUNDS_PER_STUDENT, 'Company Rounds Required': data.total.count*ROUNDS_PER_STUDENT});
+    const ws = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, name.slice(0,31));
+  }
+  addPlannerSheet('By Industry (Role)', pivot(ROWS, r=>r.__roleTag, {}));
+  addPlannerSheet('By Industry (Company)', pivot(ROWS, r=>r.__companyTag, {}));
+  XLSX.writeFile(wb, 'pool-intelligence-placement-planner.xlsx');
+});
+
+document.getElementById('printBtn').addEventListener('click', ()=>{
+  switchTab('summary');
+  setTimeout(()=> window.print(), 80);
+});
+
+document.getElementById('downloadTemplate').addEventListener('click', (e)=>{
+  e.preventDefault();
+  const sample = [
+    Object.fromEntries(EXPECTED.map(c=>[c, sampleValue(c)]))
+  ];
+  const ws = XLSX.utils.json_to_sheet(sample, {header:EXPECTED});
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Template');
+  XLSX.writeFile(wb, 'pool-intelligence-template.xlsx');
+});
+function sampleValue(c){
+  const map = {
+    'User ID':'U1001','Full Name':'Aditi Sharma','Session Availability':'Weekdays 6-9pm',
+    'Username':'aditi.sharma','Email':'aditi.sharma@example.com','Phone':'9876543210',
+    'POC':'Rahul','Pipeline Status':'Screening','Resume':'link/to/resume.pdf','College':'ABC Institute of Technology',
+    'Degree':'B.Tech','Field of Study':'Computer Science','Tier':'Tier 1','Passed Out':'2023','Post Grad':'No',
+    'Current Company':'Infosys','Current Role':'Analyst','Key Skills':'SQL, Excel, Python',
+    'Exp (Months)':'18','Notice (Days)':'30','Current CTC (₹)':'600000','Expected CTC (₹)':'900000',
+    'Current City':'Bengaluru','Preferred Cities':'Bengaluru, Pune','Preferred Roles':'Data Analyst',
+    'CTC hike':'50%','Notice period':'30 days','Location Constraints':'None'
+  };
+  return map[c]||'';
+}
+
+/* ============================================================
+   10. PLACEMENT PLANNER
+   ============================================================ */
+function plannerCardHTML(title, subtitle, key, data){
+  let html = '<div class="pivot-card">';
+  html += '<div class="card-head"><h3>'+title+'</h3><p>'+subtitle+'</p></div>';
+  html += '<table><thead><tr><th>Category</th><th class="num">Students</th><th class="num">Rounds / Student</th><th class="num">Company Rounds Required</th></tr></thead><tbody>';
+  data.rows.forEach(r=>{
+    const required = r.count*ROUNDS_PER_STUDENT;
+    html += '<tr data-key="'+key+'" data-val="'+escAttr(r.label)+'"><td>'+escHtml(r.label)+'</td><td class="num">'+r.count+'</td><td class="num">'+ROUNDS_PER_STUDENT+'</td><td class="num highlight">'+required+'</td></tr>';
+  });
+  const totalRequired = data.total.count*ROUNDS_PER_STUDENT;
+  html += '<tr class="total"><td>Total</td><td class="num">'+data.total.count+'</td><td class="num">'+ROUNDS_PER_STUDENT+'</td><td class="num">'+totalRequired+'</td></tr>';
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function renderPlanner(){
+  const rows = ROWS;
+  document.getElementById('roundsEcho').textContent = ROUNDS_PER_STUDENT;
+  document.getElementById('plannerFormulaNote').textContent =
+    'e.g. 3 students × '+ROUNDS_PER_STUDENT+' rounds = '+(3*ROUNDS_PER_STUDENT)+' company rounds to clear that bucket';
+
+  const roleData = pivot(rows, r=>r.__roleTag, {});
+  const companyData = pivot(rows, r=>r.__companyTag, {});
+
+  let html = '';
+  html += plannerCardHTML('By Industry (Role)','Company rounds needed to place each role-background pool','Industry (Role)', roleData);
+  html += plannerCardHTML('By Industry (Company)','Company rounds needed to place each company-background pool','Industry (Company)', companyData);
+  document.getElementById('plannerGrid').innerHTML = html;
+
+  const totalRequired = rows.length*ROUNDS_PER_STUDENT;
+  const busiest = roleData.rows[0];
+  const stats = [
+    [rows.length, 'Total students'],
+    [ROUNDS_PER_STUDENT, 'Rounds required / student'],
+    [totalRequired.toLocaleString('en-IN'), 'Total company rounds needed'],
+    [busiest? busiest.count*ROUNDS_PER_STUDENT : 0, 'Rounds needed for largest pool'],
+  ];
+  document.getElementById('plannerStatStrip').innerHTML = stats.map(([v,l])=>
+    '<div class="stat"><div class="num">'+v+'</div><div class="lbl">'+l+'</div></div>').join('');
+
+  document.querySelectorAll('#plannerGrid .pivot-card tbody tr:not(.total)').forEach(tr=>{
+    tr.addEventListener('click', ()=>{
+      const key = tr.getAttribute('data-key');
+      const val = tr.getAttribute('data-val');
+      setPivotFilter(key,val);
+    });
+  });
+}
+
+document.getElementById('roundsInput').addEventListener('input', (e)=>{
+  const v = parseInt(e.target.value,10);
+  ROUNDS_PER_STUDENT = (v && v>0) ? v : 1;
+  renderPlanner();
+});
+
+/* ============================================================
+   11. MASTER RENDER
+   ============================================================ */
+function renderAll(){
+  applyFilters();
+  renderStats();
+  renderSummary();
+  renderPlanner();
+  renderActiveFilters();
+  renderStudents();
+  switchTab('summary');
+}
+
+})();
+</script>
+</body>
+</html>
