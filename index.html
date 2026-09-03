@@ -113,6 +113,22 @@ h1,h2,h3,.serif{font-family:'Newsreader',serif;}
   padding:4px 9px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);
 }
 
+/* ---------- column mapping screen ---------- */
+.mapping-list{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--card);}
+.mapping-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center;padding:13px 18px;border-top:1px solid var(--line-soft);}
+.mapping-row:first-child{border-top:none;}
+.mapping-row.core{background:var(--gold-tint);}
+.mapping-field{display:flex;flex-direction:column;gap:2px;}
+.mapping-field .name{font-size:13.5px;font-weight:600;color:var(--navy);}
+.mapping-field .hint{font-size:11.5px;color:var(--ink-soft);}
+.mapping-field .badge{display:inline-block;font-size:9.5px;font-weight:700;color:var(--gold-deep);background:#fff;border:1px solid var(--gold);border-radius:20px;padding:1px 7px;margin-left:7px;letter-spacing:.02em;vertical-align:middle;}
+.mapping-row select{
+  width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:'Inter';
+  background:var(--card);color:var(--ink);
+}
+.mapping-row select.unmapped{color:var(--ink-faint);}
+.mapping-row select.mapped-core{border-color:var(--gold);}
+
 /* ---------- error / status ---------- */
 .status-bar{
   max-width:880px;margin:14px auto 0;padding:12px 16px;border-radius:7px;font-size:13.5px;
@@ -294,7 +310,7 @@ table.crosstab td.heat{color:var(--navy);font-weight:700;}
 <div class="hero-wrap" id="heroWrap">
   <div class="hero-eyebrow">Placement pool analytics</div>
   <h2>Board-ready pool intelligence.</h2>
-  <p class="lead">Upload your candidate sheet and get an executive-grade breakdown by industry background, experience band, compensation and placement load — ready to present, and ready to export.</p>
+  <p class="lead">Upload your candidate sheet in whatever format you already use — you'll get a quick chance to match your columns — and get an executive-grade breakdown by industry background, experience band, compensation and placement load. Ready to present, ready to export.</p>
 
   <div class="dropzone" id="dropzone">
     <div class="icon">↑</div>
@@ -312,6 +328,21 @@ table.crosstab td.heat{color:var(--navy);font-weight:700;}
     <summary>Columns this reads</summary>
     <div class="chips" id="expectedChips"></div>
   </details>
+</div>
+
+<!-- ============ COLUMN MAPPING ============ -->
+<div class="hero-wrap hide" id="mappingWrap" style="max-width:760px;">
+  <div class="hero-eyebrow">Confirm your columns</div>
+  <h2 style="font-size:32px;max-width:none;">Match your sheet to the analysis.</h2>
+  <p class="lead" style="margin-bottom:28px;">We've auto-matched what we could recognize. Adjust anything that's wrong, and pick <em>— Not in file —</em> for fields you don't have. Your original headers never change — this mapping is only used to read the file.</p>
+
+  <div id="mappingWarning"></div>
+  <div class="mapping-list" id="mappingList"></div>
+
+  <div class="hero-foot" style="margin-top:24px;">
+    <button class="btn small" id="mappingBack">← Choose a different file</button>
+    <button class="btn gold" id="mappingConfirm">Analyze pool →</button>
+  </div>
 </div>
 
 <div id="statusStandalone"></div>
@@ -477,14 +508,70 @@ const EXPECTED = ["User ID","Full Name","Session Availability","Username","Email
 function norm(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
 const EXPECTED_NORM = EXPECTED.map(e=>({canon:e, n:norm(e)}));
 
+// extra synonyms so common alternate header names auto-map correctly
+const SYNONYMS = {
+  'User ID': ['id','studentid','candidateid','sno','srno','rollno','rollnumber'],
+  'Full Name': ['name','candidatename','studentname'],
+  'Username': ['handle','loginid'],
+  'Email': ['emailid','email address','mailid','emailaddress'],
+  'Phone': ['mobile','contact','contactnumber','mobilenumber','phonenumber'],
+  'POC': ['pointofcontact','recruiter','owner','assignedto'],
+  'Pipeline Status': ['status','stage','pipelinestage','currentstatus'],
+  'College': ['institute','university','collegename'],
+  'Degree': ['qualification','course'],
+  'Field of Study': ['specialization','branch','major','stream'],
+  'Tier': ['collegetier','institutetier'],
+  'Passed Out': ['graduationyear','passoutyear','yearofpassing','batch'],
+  'Post Grad': ['postgraduate','pg','mastersdegree'],
+  'Current Company': ['company','employer','organization','organisation','currentemployer'],
+  'Current Role': ['role','designation','jobtitle','position','currentdesignation'],
+  'Key Skills': ['skills','skillset','technicalskills'],
+  'Exp (Months)': ['experience','experiencemonths','totalexperience','yoe','yearsofexperience','expyears'],
+  'Notice (Days)': ['noticedays','noticeperioddays'],
+  'Current CTC (₹)': ['currentctc','currentsalary','ctc','presentctc'],
+  'Expected CTC (₹)': ['expectedctc','expectedsalary','desiredctc'],
+  'Current City': ['city','location','currentlocation'],
+  'Preferred Cities': ['preferredlocations','preferredcity','desiredcities'],
+  'Preferred Roles': ['desiredroles','targetroles','interestedroles'],
+  'CTC hike': ['hike','expectedhike','hikepercentage','ctchikepercent'],
+  'Notice period': ['noticeperiod'],
+  'Location Constraints': ['locationconstraint','relocation','relocationconstraints'],
+};
+const SYNONYM_LOOKUP = {};
+Object.entries(SYNONYMS).forEach(([canon, list])=>{
+  list.forEach(s=> SYNONYM_LOOKUP[norm(s)] = canon);
+});
+
 function matchHeader(raw){
   const n = norm(raw);
   if(!n) return null;
   let hit = EXPECTED_NORM.find(e=>e.n===n);
   if(hit) return hit.canon;
+  if(SYNONYM_LOOKUP[n]) return SYNONYM_LOOKUP[n];
   hit = EXPECTED_NORM.find(e=> n.includes(e.n) || e.n.includes(n));
-  return hit ? hit.canon : null;
+  if(hit) return hit.canon;
+  const synHit = Object.keys(SYNONYM_LOOKUP).find(s=> n.includes(s) || s.includes(n));
+  return synHit ? SYNONYM_LOOKUP[synHit] : null;
 }
+
+const FIELD_HINTS = {
+  'Full Name':'Candidate name',
+  'Email':'Primary email',
+  'Username':'Login handle, if any',
+  'Current Company':'Drives Industry (Company) classification',
+  'Current Role':'Drives Industry (Role) classification',
+  'Key Skills':'Comma-separated — drives top-skills and role classification',
+  'Exp (Months)':'Total experience, in months',
+  'Notice (Days)':'Numeric notice period',
+  'Notice period':'Text notice period — used if Notice (Days) is blank',
+  'Current CTC (₹)':'Used for CTC and hike insights',
+  'Expected CTC (₹)':'Used for CTC and hike insights',
+  'CTC hike':'Optional — computed automatically if left blank',
+  'Pipeline Status':'Stage in your process (Screening, Offered, etc.)',
+  'Tier':'College tier',
+};
+const IDENTITY_FIELDS = ['Full Name','Email','Username'];
+const KEY_FIELDS = ['Full Name','Current Company','Current Role','Exp (Months)','Key Skills'];
 
 document.getElementById('expectedChips').innerHTML =
   EXPECTED.map(c=>'<span class="chip">'+c+'</span>').join('');
@@ -624,6 +711,7 @@ fileInput.addEventListener('change', e=>{ if(e.target.files.length) handleFile(e
 
 document.getElementById('newUploadBtn').addEventListener('click', ()=>{
   document.getElementById('shell').classList.remove('show');
+  document.getElementById('mappingWrap').classList.add('hide');
   document.getElementById('heroWrap').classList.remove('hide');
   document.getElementById('newUploadBtn').style.display='none';
   document.querySelectorAll('#tabs button').forEach(b=>b.disabled=true);
@@ -638,6 +726,9 @@ function setStatus(msg, type){
   inline.innerHTML = html;
   standalone.innerHTML = html;
 }
+
+let PENDING_JSON = null;
+let PENDING_HEADERS = [];
 
 function handleFile(file){
   const name = file.name.toLowerCase();
@@ -654,7 +745,7 @@ function handleFile(file){
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const json = XLSX.utils.sheet_to_json(sheet, {defval:'', raw:false});
       if(!json.length){ setStatus('That sheet looks empty — check it has a header row and at least one candidate.', 'err'); return; }
-      ingest(json);
+      showMapping(json);
     }catch(err){
       console.error(err);
       setStatus('Couldn\'t read that file. Make sure it\'s a valid CSV or Excel export.', 'err');
@@ -663,20 +754,84 @@ function handleFile(file){
   reader.readAsArrayBuffer(file);
 }
 
-function ingest(json){
-  const rawHeaders = Object.keys(json[0]);
-  const headerMap = {};
-  const unmatched = [];
-  rawHeaders.forEach(h=>{
-    const c = matchHeader(h);
-    if(c) headerMap[h]=c; else unmatched.push(h);
+/* ============================================================
+   4b. COLUMN MAPPING SCREEN
+   ============================================================ */
+function showMapping(json){
+  PENDING_JSON = json;
+  PENDING_HEADERS = Object.keys(json[0]);
+  setStatus(null);
+
+  const optionsHtml = '<option value="">— Not in file —</option>' +
+    PENDING_HEADERS.map(h=>'<option value="'+escAttr(h)+'">'+escHtml(h)+'</option>').join('');
+
+  const list = document.getElementById('mappingList');
+  list.innerHTML = EXPECTED.map(field=>{
+    const auto = PENDING_HEADERS.find(h=> matchHeader(h)===field) || '';
+    const isCore = KEY_FIELDS.includes(field) || IDENTITY_FIELDS.includes(field);
+    const hint = FIELD_HINTS[field] || '';
+    const badge = KEY_FIELDS.includes(field) ? '<span class="badge">Drives analysis</span>' : '';
+    return '<div class="mapping-row'+(isCore?' core':'')+'">'+
+      '<div class="mapping-field"><span class="name">'+escHtml(field)+badge+'</span>'+(hint?'<span class="hint">'+escHtml(hint)+'</span>':'')+'</div>'+
+      '<select data-field="'+escAttr(field)+'" class="'+(auto?'':'unmapped')+'">'+
+        optionsHtml.replace('value="'+escAttr(auto)+'"','value="'+escAttr(auto)+'" selected') +
+      '</select></div>';
+  }).join('');
+
+  list.querySelectorAll('select').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      sel.classList.toggle('unmapped', !sel.value);
+      validateMapping();
+    });
   });
-  const matchedCanon = new Set(Object.values(headerMap));
-  const missing = EXPECTED.filter(c=>!matchedCanon.has(c));
+
+  document.getElementById('heroWrap').classList.add('hide');
+  document.getElementById('mappingWrap').classList.remove('hide');
+  validateMapping();
+}
+
+function currentMapping(){
+  const mapping = {};
+  document.querySelectorAll('#mappingList select').forEach(sel=>{
+    if(sel.value) mapping[sel.getAttribute('data-field')] = sel.value;
+  });
+  return mapping;
+}
+
+function validateMapping(){
+  const mapping = currentMapping();
+  const hasIdentity = IDENTITY_FIELDS.some(f=>mapping[f]);
+  const warnEl = document.getElementById('mappingWarning');
+  if(!hasIdentity){
+    warnEl.innerHTML = '<div class="status-bar err" style="max-width:none;margin:0 0 16px;"><span>⚠</span><span>Map at least one of Full Name, Email or Username so candidates can be identified.</span></div>';
+    document.getElementById('mappingConfirm').disabled = true;
+  } else {
+    warnEl.innerHTML = '';
+    document.getElementById('mappingConfirm').disabled = false;
+  }
+  return hasIdentity;
+}
+
+document.getElementById('mappingBack').addEventListener('click', ()=>{
+  document.getElementById('mappingWrap').classList.add('hide');
+  document.getElementById('heroWrap').classList.remove('hide');
+  fileInput.value='';
+  PENDING_JSON = null;
+});
+
+document.getElementById('mappingConfirm').addEventListener('click', ()=>{
+  if(!validateMapping()) return;
+  ingest(PENDING_JSON, currentMapping());
+});
+
+function ingest(json, mapping){
+  const rawHeaders = Object.keys(json[0]);
+  const mappedCanon = new Set(Object.keys(mapping));
+  const missing = EXPECTED.filter(c=>!mappedCanon.has(c));
 
   ROWS = json.map(r=>{
     const row = {};
-    rawHeaders.forEach(h=>{ if(headerMap[h]) row[headerMap[h]] = r[h]; });
+    Object.entries(mapping).forEach(([canon, rawHeader])=>{ row[canon] = r[rawHeader]; });
     row.__expMonths = parseNum(row['Exp (Months)']);
     row.__ctcCurrent = parseNum(row['Current CTC (₹)']);
     row.__ctcExpected = parseNum(row['Expected CTC (₹)']);
@@ -691,18 +846,19 @@ function ingest(json){
   }).filter(r => Object.keys(r).length>1 && (r['Full Name']||r['Email']||r['Username']));
 
   if(!ROWS.length){
-    setStatus('No usable rows found — check that Full Name, Email or Username is filled in.', 'err');
+    setStatus('No usable rows found — check that the field you mapped to Full Name, Email or Username is actually filled in.', 'err');
     return;
   }
 
   let msg = '';
   if(missing.length){
-    msg = 'Loaded '+ROWS.length+' candidates. '+missing.length+' expected column'+(missing.length>1?'s were':' was')+' not found in your sheet (Location Constraints etc. still classify fine without them): '+missing.join(', ')+'.';
+    msg = 'Loaded '+ROWS.length+' candidates using your column mapping. '+missing.length+' field'+(missing.length>1?'s were':' was')+' left unmapped: '+missing.join(', ')+'.';
     setStatus(msg,'warn');
   } else {
     setStatus(null);
   }
 
+  document.getElementById('mappingWrap').classList.add('hide');
   document.getElementById('heroWrap').classList.add('hide');
   document.getElementById('shell').classList.add('show');
   document.getElementById('newUploadBtn').style.display='inline-flex';
