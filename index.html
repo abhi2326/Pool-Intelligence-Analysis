@@ -10,26 +10,30 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
-  --navy:#16233d;
-  --navy-deep:#0b1220;
-  --navy-mid:#1f3155;
-  --paper:#f7f7f4;
+  --navy:#17364a;
+  --navy-deep:#0c2230;
+  --navy-mid:#2d5966;
+  --paper:#f4f6f3;
   --card:#ffffff;
-  --gold:#a9812e;
-  --gold-deep:#8a6a24;
-  --gold-tint:#f4ecd8;
-  --ink:#151a24;
-  --ink-soft:#5b6472;
-  --ink-faint:#8993a1;
-  --line:#e2e3df;
-  --line-soft:#edeeea;
-  --rose:#a23b34;
-  --rose-tint:#f7e9e6;
+  --gold:#b8793e;
+  --gold-deep:#96602d;
+  --gold-tint:#f5eadc;
+  --ink:#18242b;
+  --ink-soft:#5f6c73;
+  --ink-faint:#89949a;
+  --line:#dce2df;
+  --line-soft:#edf0ee;
+  --rose:#a94444;
+  --rose-tint:#f9e9e8;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
+html{color-scheme:light;}
 body{
-  background:var(--paper);
+  background-color:var(--paper);
+  background-image:linear-gradient(rgba(23,54,74,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(23,54,74,.035) 1px,transparent 1px),radial-gradient(circle at 82% 10%,rgba(45,89,102,.08),transparent 28%),linear-gradient(145deg,#f4f6f3 0%,#f4f6f3 56%,#eaf1ee 100%);
+  background-size:32px 32px,32px 32px,auto,auto;
+  background-size:cover;
   color:var(--ink);
   font-family:'Inter',sans-serif;
   -webkit-font-smoothing:antialiased;
@@ -41,7 +45,8 @@ h1,h2,h3,.serif{font-family:'Newsreader',serif;}
 .topbar{
   display:flex;align-items:center;justify-content:space-between;
   padding:16px 36px;border-bottom:1px solid var(--line);
-  background:var(--card);
+  background:rgba(255,255,255,.94);
+  box-shadow:0 2px 18px rgba(23,54,74,.08);
   position:sticky;top:0;z-index:40;
 }
 .brand{display:flex;align-items:center;gap:12px;}
@@ -53,15 +58,16 @@ h1,h2,h3,.serif{font-family:'Newsreader',serif;}
 }
 .brand h1{font-size:18.5px;font-weight:600;margin:0;letter-spacing:-0.01em;color:var(--navy);}
 .brand span.sub{color:var(--ink-faint);font-size:12px;font-weight:500;display:block;margin-top:1px;}
-.tabs{display:flex;gap:26px;border-bottom:none;}
+.tabs{display:flex;gap:5px;border-bottom:none;padding:4px;background:var(--line-soft);border:1px solid var(--line);border-radius:8px;}
 .tabs button{
-  border:none;background:transparent;padding:8px 2px;border-bottom:2px solid transparent;
+  border:none;background:transparent;padding:8px 13px;border-bottom:2px solid transparent;border-radius:5px;
   font-family:'Inter';font-size:13.5px;font-weight:600;color:var(--ink-faint);cursor:pointer;
   transition:color .15s, border-color .15s;
 }
-.tabs button.active{color:var(--navy);border-bottom-color:var(--gold);}
+.tabs button.active{color:var(--navy);background:var(--card);border-bottom-color:var(--gold);box-shadow:0 1px 4px rgba(22,35,61,.12);}
 .tabs button:hover:not(:disabled):not(.active){color:var(--ink);}
 .tabs button:disabled{opacity:.35;cursor:not-allowed;}
+.tabs button:focus-visible{outline:2px solid var(--gold);outline-offset:4px;border-radius:3px;}
 .topbar-actions{display:flex;gap:10px;align-items:center;}
 .btn{
   font-family:'Inter';font-weight:600;font-size:13px;border-radius:6px;padding:9px 16px;
@@ -77,34 +83,42 @@ h1,h2,h3,.serif{font-family:'Newsreader',serif;}
 .btn.small{padding:6px 12px;font-size:12px;}
 
 /* ---------- hero / upload ---------- */
-.hero-wrap{max-width:880px;margin:0 auto;padding:88px 24px 40px;}
-.hero-eyebrow{color:var(--gold-deep);font-weight:600;font-size:13px;margin-bottom:16px;letter-spacing:.02em;}
+.hero-wrap{max-width:1040px;margin:0 auto;padding:76px 28px 48px;}
+.hero-wrap{max-width:1180px;margin:0 auto;padding:84px 38px 56px;}
+.hero-layout{display:grid;grid-template-columns:minmax(0,.9fr) minmax(440px,1.1fr);gap:72px;align-items:center;}
+.hero-copy{padding-bottom:18px;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--gold-deep);font-weight:700;font-size:12px;margin-bottom:18px;letter-spacing:.08em;text-transform:uppercase;}
+.hero-eyebrow::before{content:'';width:24px;height:2px;background:var(--gold);}
 .hero-wrap h2{font-size:46px;line-height:1.1;margin:0 0 18px;font-weight:500;letter-spacing:-0.015em;max-width:13ch;color:var(--navy);}
-.hero-wrap p.lead{font-size:16.5px;color:var(--ink-soft);max-width:58ch;line-height:1.65;margin:0 0 40px;}
+.hero-wrap h2{font-size:52px;line-height:1.04;margin:0 0 22px;font-weight:500;letter-spacing:-0.015em;max-width:10ch;color:var(--navy);}
+.hero-wrap p.lead{font-size:16px;color:var(--ink-soft);max-width:64ch;line-height:1.65;margin:0 0 34px;}
 
 .dropzone{
   border:1.5px dashed var(--line);
   border-radius:8px;
-  padding:48px 30px;
+  min-height:330px;
+  padding:42px 30px;
   text-align:center;
-  background:var(--card);
+  background:rgba(255,255,255,.94);
+  box-shadow:0 22px 55px rgba(23,54,74,.1);
   cursor:pointer;
   transition:border-color .15s, background .15s;
 }
-.dropzone.drag{border-color:var(--gold);background:var(--gold-tint);}
+.dropzone:hover,.dropzone.drag{border-color:var(--gold);background:var(--gold-tint);transform:translateY(-2px);box-shadow:0 20px 42px rgba(0,0,0,.28);}
 .dropzone .icon{
   width:44px;height:44px;border-radius:50%;background:var(--navy);color:var(--gold);
   display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:18px;
 }
 .dropzone h3{margin:0 0 6px;font-size:17px;font-weight:600;color:var(--navy);}
 .dropzone p{margin:0;color:var(--ink-soft);font-size:13.5px;}
+.dropzone::after{content:'CSV  /  XLSX  /  XLS';display:block;margin-top:20px;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;}
 .dropzone input{display:none;}
 .hero-foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;flex-wrap:wrap;gap:10px;}
 .hero-foot .cols-note{font-size:12.5px;color:var(--ink-soft);}
 .hero-foot .cols-note a{color:var(--navy);font-weight:600;text-decoration:none;border-bottom:1px solid var(--gold);}
 
 .expected-cols{
-  margin-top:38px;border-top:1px solid var(--line);padding-top:26px;
+  margin-top:28px;border-top:1px solid var(--line);padding-top:20px;
 }
 .expected-cols summary{cursor:pointer;font-weight:600;font-size:13.5px;color:var(--navy);}
 .expected-cols .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;}
@@ -154,6 +168,8 @@ h1,h2,h3,.serif{font-family:'Newsreader',serif;}
 
 .grid3{display:grid;grid-template-columns:1.05fr 1.35fr 0.9fr;gap:20px;align-items:start;}
 .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;align-items:start;}
+#extraGrid{display:flex;flex-wrap:wrap;align-items:flex-start;gap:20px;}
+#extraGrid > *{flex:1 1 calc(50% - 10px);min-width:300px;}
 @media(max-width:1100px){.grid3{grid-template-columns:1fr;}.grid2{grid-template-columns:1fr;}}
 
 .pivot-card{border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--card);}
@@ -180,6 +196,8 @@ h1,h2,h3,.serif{font-family:'Newsreader',serif;}
   flex:1;min-width:220px;padding:10px 13px;border:1px solid var(--line);border-radius:6px;font-size:13.5px;font-family:'Inter';
 }
 .filter-bar select{padding:9px 11px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:'Inter';background:var(--card);color:var(--ink);}
+.filter-bar select.filter-select{min-width:155px;}
+.filter-bar .filter-label{font-size:11px;color:var(--ink-faint);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-right:-4px;}
 .active-filter{
   display:inline-flex;align-items:center;gap:7px;background:var(--navy);color:#fff;
   padding:6px 8px 6px 12px;border-radius:20px;font-size:12.5px;font-weight:600;
@@ -193,7 +211,7 @@ table.students thead th{
   padding:10px 12px;font-weight:600;font-size:11.5px;white-space:nowrap;z-index:2;
 }
 table.students tbody td{padding:9px 12px;border-top:1px solid var(--line-soft);white-space:nowrap;}
-table.students tbody tr:nth-child(even){background:#fafaf8;}
+table.students tbody tr:nth-child(even){background:#fafcfb;}
 table.students tbody tr:hover{background:var(--gold-tint);}
 .tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:var(--line-soft);color:var(--ink-soft);}
 .tag.fresher{background:var(--gold-tint);color:var(--gold-deep);}
@@ -209,6 +227,19 @@ table.students tbody tr:hover{background:var(--gold-tint);}
 .export-card h3{margin:0 0 6px;font-size:16px;color:var(--navy);}
 .export-card p{margin:0 0 18px;font-size:13px;color:var(--ink-soft);line-height:1.55;}
 @media(max-width:700px){.export-grid{grid-template-columns:1fr;}}
+@media(max-width:800px){
+  .topbar{padding:13px 18px;gap:14px;flex-wrap:wrap;}
+  .tabs{order:3;width:100%;gap:4px;overflow-x:auto;padding:3px;background:var(--line-soft);border-radius:7px;}
+  .tabs button{flex:1 0 auto;padding:9px 12px;border-bottom:none;border-radius:5px;}
+  .tabs button.active{background:var(--card);box-shadow:0 1px 3px rgba(11,18,32,.12);}
+  .tabs button:disabled{opacity:.45;}
+  .hero-wrap{padding:54px 20px 40px;}
+  .hero-layout{grid-template-columns:1fr;gap:30px;}
+  .hero-wrap h2{font-size:42px;}
+  .hero-copy{padding-bottom:0;}
+  .dropzone{min-height:260px;}
+}
+@media(max-width:600px){#extraGrid > *{flex-basis:100%;min-width:0;}}
 
 .rules-note{margin-top:12px;font-size:12px;color:var(--ink-soft);line-height:1.65;background:var(--line-soft);border:1px solid var(--line);border-radius:7px;padding:13px 16px;}
 
@@ -296,10 +327,10 @@ table.crosstab td.heat{color:var(--navy);font-weight:700;}
     </div>
   </div>
   <div class="tabs" id="tabs">
-    <button data-tab="summary" class="active" disabled>Pool Summary</button>
-    <button data-tab="planner" disabled>Placement Planner</button>
-    <button data-tab="students" disabled>Student Directory</button>
-    <button data-tab="export" disabled>Export</button>
+    <button data-tab="summary" class="active" disabled aria-selected="true">Pool Summary</button>
+    <button data-tab="planner" disabled aria-selected="false">Placement Planner</button>
+    <button data-tab="students" disabled aria-selected="false">Student Directory</button>
+    <button data-tab="export" disabled aria-selected="false">Export</button>
   </div>
   <div class="topbar-actions">
     <button class="btn small" id="newUploadBtn" style="display:none;">Load another file</button>
@@ -308,26 +339,29 @@ table.crosstab td.heat{color:var(--navy);font-weight:700;}
 
 <!-- ============ UPLOAD / HERO ============ -->
 <div class="hero-wrap" id="heroWrap">
-  <div class="hero-eyebrow">Placement pool analytics</div>
-  <h2>Board-ready pool intelligence.</h2>
-  <p class="lead">Upload your candidate sheet in whatever format you already use — you'll get a quick chance to match your columns — and get an executive-grade breakdown by industry background, experience band, compensation and placement load. Ready to present, ready to export.</p>
-
-  <div class="dropzone" id="dropzone">
-    <div class="icon">↑</div>
-    <h3>Drop your CSV or XLSX here</h3>
-    <p>or click to browse — headers are matched automatically</p>
-    <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
+  <div class="hero-layout">
+    <div class="hero-copy">
+      <div class="hero-eyebrow">Placement pool analytics</div>
+      <h2>Board-ready pool intelligence.</h2>
+      <p class="lead">Turn a candidate sheet into a clear view of industry background, experience, compensation and placement load.</p>
+    </div>
+    <div class="upload-column">
+      <div class="dropzone" id="dropzone">
+        <div class="icon">↑</div>
+        <h3>Drop your candidate sheet here</h3>
+        <p>or click to browse — columns are matched automatically</p>
+        <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
+      </div>
+      <div class="hero-foot">
+        <span class="cols-note">Not sure your columns line up? <a id="downloadTemplate" href="#">Download a starter template</a></span>
+        <span class="cols-note" id="fileNameNote"></span>
+      </div>
+      <details class="expected-cols">
+        <summary>Columns this reads</summary>
+        <div class="chips" id="expectedChips"></div>
+      </details>
+    </div>
   </div>
-
-  <div class="hero-foot">
-    <span class="cols-note">Not sure your columns line up? <a id="downloadTemplate" href="#">Download a starter template</a></span>
-    <span class="cols-note" id="fileNameNote"></span>
-  </div>
-
-  <details class="expected-cols">
-    <summary>Columns this reads</summary>
-    <div class="chips" id="expectedChips"></div>
-  </details>
 </div>
 
 <!-- ============ COLUMN MAPPING ============ -->
@@ -442,6 +476,10 @@ table.crosstab td.heat{color:var(--navy);font-weight:700;}
     </div>
     <div class="filter-bar">
       <input type="text" id="searchBox" placeholder="Search name, company, role, skills, email…">
+      <span class="filter-label">Filter</span>
+      <select id="roleFilter" class="filter-select" aria-label="Filter by previous role industry"><option value="">All role industries</option></select>
+      <select id="companyFilter" class="filter-select" aria-label="Filter by previous company industry"><option value="">All company industries</option></select>
+      <select id="experienceFilter" class="filter-select" aria-label="Filter by experience band"><option value="">All experience bands</option></select>
       <div id="activeFilters" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
     </div>
     <div class="table-wrap">
@@ -499,11 +537,10 @@ table.crosstab td.heat{color:var(--navy);font-weight:700;}
 /* ============================================================
    1. EXPECTED COLUMNS + FUZZY HEADER MATCHING
    ============================================================ */
-const EXPECTED = ["User ID","Full Name","Session Availability","Username","Email","Phone","POC",
+const EXPECTED = ["User ID","Full Name","Username","Email","Phone","POC",
   "Pipeline Status","Resume","College","Degree","Field of Study","Tier","Passed Out","Post Grad",
   "Current Company","Current Role","Key Skills","Exp (Months)","Notice (Days)","Current CTC (₹)",
-  "Expected CTC (₹)","Current City","Preferred Cities","Preferred Roles","CTC hike","Notice period",
-  "Location Constraints"];
+  "Expected CTC (₹)","Current City","Preferred Cities","Preferred Roles","Notice period"];
 
 function norm(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
 const EXPECTED_NORM = EXPECTED.map(e=>({canon:e, n:norm(e)}));
@@ -533,9 +570,7 @@ const SYNONYMS = {
   'Current City': ['city','location','currentlocation'],
   'Preferred Cities': ['preferredlocations','preferredcity','desiredcities'],
   'Preferred Roles': ['desiredroles','targetroles','interestedroles'],
-  'CTC hike': ['hike','expectedhike','hikepercentage','ctchikepercent'],
-  'Notice period': ['noticeperiod'],
-  'Location Constraints': ['locationconstraint','relocation','relocationconstraints'],
+  'Notice period': ['noticeperiod','notice','np'],
 };
 const SYNONYM_LOOKUP = {};
 Object.entries(SYNONYMS).forEach(([canon, list])=>{
@@ -587,7 +622,8 @@ function matchAny(text, keywords){ return keywords.some(k=>hasWord(text,k)); }
 
 const ROLE_BUCKETS = [
   ['Analyst', ['analyst','analytics']],
-  ['AI/ML, Tech, Automation', ['ai','ml','machine learning','artificial intelligence','automation','developer','software engineer','engineer','data scientist','data science','programmer','tech lead','sde']],
+  ['Civil / Site Engineering', ['civil','site engineer','site supervisor','structural','quantity surveyor','project engineer','construction engineer']],
+  ['AI/ML, Tech, Automation', ['ai','ml','machine learning','artificial intelligence','automation','developer','software engineer','data scientist','data science','programmer','tech lead','sde','software']],
   ['MIS', ['mis']],
   ['Operations', ['operations','ops']],
   ['Sales, Customer Support', ['sales','customer support','customer service','business development','bdm','telecaller','support executive','account manager']],
@@ -664,6 +700,12 @@ function hikePctOf(row){
   }
   return null;
 }
+function locationConstraintOf(row){
+  const raw = String(row['Preferred Cities']||'').trim();
+  if(!raw) return 'Not specified';
+  const locations = raw.split(/[,;/|]/).map(x=>x.trim()).filter(Boolean);
+  return locations.length < 3 ? 'Limited choice' : 'Flexible';
+}
 function noticeBand(days){
   if(days===null) return 'Unspecified';
   if(days<=0) return 'Immediate';
@@ -723,8 +765,9 @@ function setStatus(msg, type){
   const inline = document.getElementById('statusInline');
   const standalone = document.getElementById('statusStandalone');
   const html = msg ? '<div class="status-bar '+(type||'warn')+'"><span>'+(type==='err'?'⚠':'ℹ')+'</span><span>'+msg+'</span></div>' : '';
-  inline.innerHTML = html;
-  standalone.innerHTML = html;
+  const dashboardVisible = document.getElementById('shell').classList.contains('show');
+  inline.innerHTML = dashboardVisible ? html : '';
+  standalone.innerHTML = dashboardVisible ? '' : html;
 }
 
 let PENDING_JSON = null;
@@ -761,6 +804,18 @@ function showMapping(json){
   PENDING_JSON = json;
   PENDING_HEADERS = Object.keys(json[0]);
   setStatus(null);
+
+  const automaticMapping = {};
+  PENDING_HEADERS.forEach(header=>{
+    const field = matchHeader(header);
+    if(field && !automaticMapping[field]) automaticMapping[field] = header;
+  });
+  const hasIdentity = IDENTITY_FIELDS.some(field=>automaticMapping[field]);
+  const hasAnalysisInput = automaticMapping['Current Role'] || automaticMapping['Current Company'];
+  if(hasIdentity && hasAnalysisInput){
+    ingest(json, automaticMapping);
+    return;
+  }
 
   const optionsHtml = '<option value="">— Not in file —</option>' +
     PENDING_HEADERS.map(h=>'<option value="'+escAttr(h)+'">'+escHtml(h)+'</option>').join('');
@@ -825,10 +880,6 @@ document.getElementById('mappingConfirm').addEventListener('click', ()=>{
 });
 
 function ingest(json, mapping){
-  const rawHeaders = Object.keys(json[0]);
-  const mappedCanon = new Set(Object.keys(mapping));
-  const missing = EXPECTED.filter(c=>!mappedCanon.has(c));
-
   ROWS = json.map(r=>{
     const row = {};
     Object.entries(mapping).forEach(([canon, rawHeader])=>{ row[canon] = r[rawHeader]; });
@@ -842,6 +893,7 @@ function ingest(json, mapping){
     row.__noticeBand = noticeBand(row.__noticeDays);
     row.__hikePct = hikePctOf(row);
     row.__hikeBand = hikeBand(row.__hikePct);
+    row.__locationConstraint = locationConstraintOf(row);
     return row;
   }).filter(r => Object.keys(r).length>1 && (r['Full Name']||r['Email']||r['Username']));
 
@@ -850,21 +902,15 @@ function ingest(json, mapping){
     return;
   }
 
-  let msg = '';
-  if(missing.length){
-    msg = 'Loaded '+ROWS.length+' candidates using your column mapping. '+missing.length+' field'+(missing.length>1?'s were':' was')+' left unmapped: '+missing.join(', ')+'.';
-    setStatus(msg,'warn');
-  } else {
-    setStatus(null);
-  }
-
   document.getElementById('mappingWrap').classList.add('hide');
   document.getElementById('heroWrap').classList.add('hide');
   document.getElementById('shell').classList.add('show');
+  setStatus(null);
   document.getElementById('newUploadBtn').style.display='inline-flex';
   document.querySelectorAll('#tabs button').forEach(b=>b.disabled=false);
 
   activeFilters = {}; page = 0;
+  populateDirectoryFilters();
   renderAll();
 }
 
@@ -1128,7 +1174,10 @@ function setPivotFilter(key,val){
   if(searchBox.value) searchBox.value = ''; // a category click starts a fresh view, not a refinement of the old search
   applyFilters();
   switchTab('students');
+  syncDirectoryFilters();
   renderActiveFilters();
+  renderSummary();
+  renderPlanner();
   renderStudents();
 }
 
@@ -1136,8 +1185,32 @@ function removeFilter(key){
   delete activeFilters[key];
   page = 0;
   applyFilters();
+  syncDirectoryFilters();
   renderActiveFilters();
   renderStudents();
+}
+
+function populateDirectoryFilters(){
+  const configs = [
+    ['roleFilter','Industry (Role)',r=>r.__roleTag],
+    ['companyFilter','Industry (Company)',r=>r.__companyTag],
+    ['experienceFilter','Experience Band',r=>r.__expBand]
+  ];
+  configs.forEach(([id,label,getter])=>{
+    const select = document.getElementById(id);
+    const values = Array.from(new Set(ROWS.map(getter))).sort((a,b)=>String(a).localeCompare(String(b)));
+    const first = select.options[0].outerHTML;
+    select.innerHTML = first + values.map(v=>'<option value="'+escAttr(v)+'">'+escHtml(v)+'</option>').join('');
+    select.dataset.filterKey = label;
+  });
+  syncDirectoryFilters();
+}
+
+function syncDirectoryFilters(){
+  [['roleFilter','Industry (Role)'],['companyFilter','Industry (Company)'],['experienceFilter','Experience Band']].forEach(([id,key])=>{
+    const select = document.getElementById(id);
+    if(select) select.value = activeFilters[key] || '';
+  });
 }
 
 function renderActiveFilters(){
@@ -1173,7 +1246,7 @@ function applyFilters(){
 const STUDENT_COLS = [
   'Full Name','Email','Username','Phone','POC','Pipeline Status','Tier','College',
   'Current Company','Current Role','Industry (Role)','Industry (Company)','Exp (Months)','Experience Band',
-  'Notice period','Current CTC (₹)','Expected CTC (₹)','CTC hike','Current City','Preferred Cities'
+  'Notice period','Current CTC (₹)','Expected CTC (₹)','CTC hike','Current City','Preferred Cities','Location Constraints'
 ];
 
 const NUMERIC_COLS = new Set(['Exp (Months)','Current CTC (₹)','Expected CTC (₹)','CTC hike']);
@@ -1182,6 +1255,8 @@ function cellValue(r,col){
   if(col==='Industry (Role)') return r.__roleTag;
   if(col==='Industry (Company)') return r.__companyTag;
   if(col==='Experience Band') return r.__expBand;
+  if(col==='CTC hike') return r.__hikePct!==null ? r.__hikePct.toFixed(0)+'%' : '—';
+  if(col==='Location Constraints') return r.__locationConstraint;
   return r[col]!==undefined && r[col]!=='' ? r[col] : '—';
 }
 function sortValue(r,col){
@@ -1256,11 +1331,29 @@ document.getElementById('nextPage').addEventListener('click', ()=>{
   if(page<totalPages-1){page++; renderStudents();}
 });
 
+[['roleFilter','Industry (Role)'],['companyFilter','Industry (Company)'],['experienceFilter','Experience Band']].forEach(([id,key])=>{
+  document.getElementById(id).addEventListener('change', e=>{
+    if(e.target.value) activeFilters[key] = e.target.value;
+    else delete activeFilters[key];
+    page = 0;
+    applyFilters();
+    renderActiveFilters();
+    renderSummary();
+    renderPlanner();
+    renderStudents();
+    switchTab('students');
+  });
+});
+
 /* ============================================================
    8. TABS
    ============================================================ */
 function switchTab(name){
-  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('#tabs button').forEach(b=>{
+    const isActive = b.dataset.tab===name;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
   ['summary','planner','students','export'].forEach(t=>{
     document.getElementById('tab-'+t).style.display = (t===name)?'block':'none';
   });
@@ -1273,13 +1366,15 @@ document.querySelectorAll('#tabs button').forEach(b=>{
    9. EXPORT
    ============================================================ */
 document.getElementById('exportStudents').addEventListener('click', ()=>{
-  const cols = EXPECTED.concat(['Industry (Role)','Industry (Company)','Experience Band']);
+  const cols = EXPECTED.concat(['Industry (Role)','Industry (Company)','Experience Band','CTC hike','Location Constraints']);
   const data = ROWS.map(r=>{
     const o = {};
     EXPECTED.forEach(c=> o[c] = r[c]!==undefined ? r[c] : '');
     o['Industry (Role)'] = r.__roleTag;
     o['Industry (Company)'] = r.__companyTag;
     o['Experience Band'] = r.__expBand;
+    o['CTC hike'] = r.__hikePct!==null ? +r.__hikePct.toFixed(1) : '';
+    o['Location Constraints'] = r.__locationConstraint;
     return o;
   });
   const ws = XLSX.utils.json_to_sheet(data, {header:cols});
